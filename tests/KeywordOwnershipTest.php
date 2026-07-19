@@ -1,6 +1,6 @@
 <?php
 
-use Schemastud\Beam\Notifications\Keywords;
+use Splicewire\Beam\Notifications\Keywords;
 
 it('owns x-beam-notify under the x-beam family prefix', function () {
     expect(Keywords::Notify)->toBe('x-beam-notify')

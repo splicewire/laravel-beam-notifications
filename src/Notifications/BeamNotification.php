@@ -1,6 +1,6 @@
 <?php
 
-namespace Schemastud\Beam\Notifications\Notifications;
+namespace Splicewire\Beam\Notifications\Notifications;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -8,7 +8,7 @@ use Illuminate\Notifications\ChannelManager;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Queue\SerializesModels;
-use Schemastud\Beam\Notifications\Support\Interpolator;
+use Splicewire\Beam\Notifications\Support\Interpolator;
 
 /**
  * The one generic notification the package synthesizes from `x-beam-notify` (spec §1) —

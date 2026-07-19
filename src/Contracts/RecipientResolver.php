@@ -1,9 +1,9 @@
 <?php
 
-namespace Schemastud\Beam\Notifications\Contracts;
+namespace Splicewire\Beam\Notifications\Contracts;
 
-use Schemastud\Beam\Notifications\Recipients\DefaultRecipientResolver;
-use Schemastud\Beam\Notifications\Recipients\Recipient;
+use Splicewire\Beam\Notifications\Recipients\DefaultRecipientResolver;
+use Splicewire\Beam\Notifications\Recipients\Recipient;
 
 /**
  * Resolves the three typed recipient keys of `x-beam-notify` into concrete
@@ -14,7 +14,7 @@ use Schemastud\Beam\Notifications\Recipients\Recipient;
  *    {@see DefaultRecipientResolver}, which handles
  *    `to:` (literal + payload-ref addresses) and NOTHING else — `to_roles`/`to_teams` throw
  *    a clear error there (no silent no-recipient send).
- *  - `schemastud/laravel-beam-accounts` (a SOFT dep) rebinds this contract to an
+ *  - `splicewire/laravel-beam-accounts` (a SOFT dep) rebinds this contract to an
  *    accounts-aware resolver that additionally resolves `to_roles` -> role-member models and
  *    `to_teams` -> team-member models.
  *

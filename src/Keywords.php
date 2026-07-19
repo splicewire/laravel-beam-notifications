@@ -1,6 +1,6 @@
 <?php
 
-namespace Schemastud\Beam\Notifications;
+namespace Splicewire\Beam\Notifications;
 
 /**
  * The JSON-Schema extension keywords THIS package owns.

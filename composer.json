@@ -1,5 +1,5 @@
 {
-    "name": "schemastud/laravel-beam-notifications",
+    "name": "splicewire/laravel-beam-notifications",
     "description": "The notify capability of the schemastud beam family: a beam can notify. Owns the x-beam-notify keyword and the submission -> notify wiring, synthesizing one generic BeamNotification from the keyword (overridable by a host FQCN) to typed recipients (to / to_roles / to_teams). Consumes rushing/laravel-notification-status for delivery tracking with zero coupling and reuses Laravel's channels + Notifiable; the central relay is a satellite-registered custom channel, not shipped here.",
     "keywords": [
         "laravel",
@@ -22,7 +22,7 @@
         "illuminate/contracts": "^11.0|^12.0|^13.0",
         "illuminate/notifications": "^11.0|^12.0|^13.0",
         "illuminate/support": "^11.0|^12.0|^13.0",
-        "schemastud/laravel-beam": "*"
+        "splicewire/laravel-beam": "*"
     },
     "require-dev": {
         "laravel/pint": "^1.0",
@@ -32,16 +32,16 @@
     },
     "suggest": {
         "rushing/laravel-notification-status": "Durable pending/sent/failed/given_up delivery ledger with retry + replay. Consumed automatically through Laravel's native notification events — no wiring needed.",
-        "schemastud/laravel-beam-accounts": "Resolves the to_roles / to_teams recipient keys (roles enum + team membership). Without it, only the address-only `to:` key works; to_roles/to_teams throw a clear boot/first-send error."
+        "splicewire/laravel-beam-accounts": "Resolves the to_roles / to_teams recipient keys (roles enum + team membership). Without it, only the address-only `to:` key works; to_roles/to_teams throw a clear boot/first-send error."
     },
     "autoload": {
         "psr-4": {
-            "Schemastud\\Beam\\Notifications\\": "src/"
+            "Splicewire\\Beam\\Notifications\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Schemastud\\Beam\\Notifications\\Tests\\": "tests/"
+            "Splicewire\\Beam\\Notifications\\Tests\\": "tests/"
         }
     },
     "extra": {
@@ -50,7 +50,7 @@
         },
         "laravel": {
             "providers": [
-                "Schemastud\\Beam\\Notifications\\BeamNotificationsServiceProvider"
+                "Splicewire\\Beam\\Notifications\\BeamNotificationsServiceProvider"
             ]
         }
     },

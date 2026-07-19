@@ -3,7 +3,7 @@
 use Illuminate\Notifications\Channels\DatabaseChannel;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Notification;
-use Schemastud\Beam\Notifications\Notifications\BeamNotification;
+use Splicewire\Beam\Notifications\Notifications\BeamNotification;
 
 it('ships NO central-channel implementation in the package (headless beam carries no relay)', function () {
     // §3: beam-notifications knows `central` only as a channel-NAME string. It ships no

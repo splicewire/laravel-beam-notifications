@@ -1,10 +1,10 @@
 <?php
 
-namespace Schemastud\Beam\Notifications\Listeners;
+namespace Splicewire\Beam\Notifications\Listeners;
 
-use Schemastud\Beam\Notifications\Contracts\SchemaResolver;
-use Schemastud\Beam\Notifications\Keywords;
-use Schemastud\Beam\Notifications\Support\NotificationDispatcher;
+use Splicewire\Beam\Notifications\Contracts\SchemaResolver;
+use Splicewire\Beam\Notifications\Keywords;
+use Splicewire\Beam\Notifications\Support\NotificationDispatcher;
 
 /**
  * The submission -> notify wiring (spec §T). Bound to `BeamSubmission::created` (the

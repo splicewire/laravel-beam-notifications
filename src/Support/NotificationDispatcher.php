@@ -1,14 +1,14 @@
 <?php
 
-namespace Schemastud\Beam\Notifications\Support;
+namespace Splicewire\Beam\Notifications\Support;
 
 use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Notifications\Notification as LaravelNotification;
 use Illuminate\Support\Facades\Notification;
-use Schemastud\Beam\Notifications\Contracts\RecipientResolver;
-use Schemastud\Beam\Notifications\Keywords;
-use Schemastud\Beam\Notifications\Notifications\BeamNotification;
-use Schemastud\Beam\Notifications\Recipients\Recipient;
+use Splicewire\Beam\Notifications\Contracts\RecipientResolver;
+use Splicewire\Beam\Notifications\Keywords;
+use Splicewire\Beam\Notifications\Notifications\BeamNotification;
+use Splicewire\Beam\Notifications\Recipients\Recipient;
 
 /**
  * Turns a resolved `x-beam-notify` keyword + its context into an actual send:

@@ -1,6 +1,6 @@
 <?php
 
-namespace Schemastud\Beam\Notifications\Tests\Fixtures;
+namespace Splicewire\Beam\Notifications\Tests\Fixtures;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;

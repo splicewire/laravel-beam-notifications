@@ -1,8 +1,8 @@
 <?php
 
-namespace Schemastud\Beam\Notifications\Contracts;
+namespace Splicewire\Beam\Notifications\Contracts;
 
-use Schemastud\Beam\Notifications\Support\SnapshotSchemaResolver;
+use Splicewire\Beam\Notifications\Support\SnapshotSchemaResolver;
 
 /**
  * Resolves the schema document (carrying `x-beam-notify`) for a submission at fire-time

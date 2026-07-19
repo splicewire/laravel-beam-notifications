@@ -1,6 +1,6 @@
 <?php
 
-use Schemastud\Beam\Notifications\Support\Interpolator;
+use Splicewire\Beam\Notifications\Support\Interpolator;
 
 it('substitutes a {{ path }} token with a dot-path value', function () {
     $out = Interpolator::render('Hello {{ payload.name }}', [

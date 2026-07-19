@@ -1,8 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Notification;
-use Schemastud\Beam\Models\SchemaRecord;
-use Schemastud\Beam\Notifications\Notifications\BeamNotification;
+use Splicewire\Beam\Models\SchemaRecord;
+use Splicewire\Beam\Notifications\Notifications\BeamNotification;
 
 it('fires on BeamSubmission::created', function () {
     Notification::fake();

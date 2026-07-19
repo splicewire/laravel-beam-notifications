@@ -1,8 +1,8 @@
 <?php
 
-use Schemastud\Beam\Models\BeamSubmission;
-use Schemastud\Beam\Models\SchemaRecord;
-use Schemastud\Beam\Notifications\Tests\TestCase;
+use Splicewire\Beam\Models\BeamSubmission;
+use Splicewire\Beam\Models\SchemaRecord;
+use Splicewire\Beam\Notifications\Tests\TestCase;
 
 uses(TestCase::class)->in('.');
 

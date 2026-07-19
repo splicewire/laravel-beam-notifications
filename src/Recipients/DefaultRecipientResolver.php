@@ -1,9 +1,9 @@
 <?php
 
-namespace Schemastud\Beam\Notifications\Recipients;
+namespace Splicewire\Beam\Notifications\Recipients;
 
-use Schemastud\Beam\Notifications\Contracts\RecipientResolver;
-use Schemastud\Beam\Notifications\Support\Interpolator;
+use Splicewire\Beam\Notifications\Contracts\RecipientResolver;
+use Splicewire\Beam\Notifications\Support\Interpolator;
 
 /**
  * The built-in, accounts-free resolver (spec §2). Handles ONLY the address-only `to:` key:
@@ -16,7 +16,7 @@ use Schemastud\Beam\Notifications\Support\Interpolator;
  *
  * `to_roles:` / `to_teams:` are NOT handled: this resolver throws
  * {@see UnresolvableRecipientKind} rather than silently dropping them. An accounts-aware
- * resolver (bound by schemastud/laravel-beam-accounts, the soft dep) replaces this binding
+ * resolver (bound by splicewire/laravel-beam-accounts, the soft dep) replaces this binding
  * to add role/team member resolution.
  */
 class DefaultRecipientResolver implements RecipientResolver

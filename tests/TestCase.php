@@ -1,15 +1,15 @@
 <?php
 
-namespace Schemastud\Beam\Notifications\Tests;
+namespace Splicewire\Beam\Notifications\Tests;
 
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Orchestra\Testbench\TestCase as Orchestra;
-use Schemastud\Beam\BeamServiceProvider;
-use Schemastud\Beam\Notifications\BeamNotificationsServiceProvider;
 use Spatie\Activitylog\ActivitylogServiceProvider;
 use Spatie\LaravelData\LaravelDataServiceProvider;
 use Spatie\MediaLibrary\MediaLibraryServiceProvider;
+use Splicewire\Beam\BeamServiceProvider;
+use Splicewire\Beam\Notifications\BeamNotificationsServiceProvider;
 
 abstract class TestCase extends Orchestra
 {

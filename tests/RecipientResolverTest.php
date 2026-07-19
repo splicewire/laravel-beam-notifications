@@ -3,13 +3,13 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Schema;
-use Schemastud\Beam\Notifications\Contracts\RecipientResolver;
-use Schemastud\Beam\Notifications\Notifications\BeamNotification;
-use Schemastud\Beam\Notifications\Recipients\DefaultRecipientResolver;
-use Schemastud\Beam\Notifications\Recipients\Recipient;
-use Schemastud\Beam\Notifications\Recipients\UnresolvableRecipientKind;
-use Schemastud\Beam\Notifications\Tests\Fixtures\StubAccountsRecipientResolver;
-use Schemastud\Beam\Notifications\Tests\Fixtures\TeamMemberUser;
+use Splicewire\Beam\Notifications\Contracts\RecipientResolver;
+use Splicewire\Beam\Notifications\Notifications\BeamNotification;
+use Splicewire\Beam\Notifications\Recipients\DefaultRecipientResolver;
+use Splicewire\Beam\Notifications\Recipients\Recipient;
+use Splicewire\Beam\Notifications\Recipients\UnresolvableRecipientKind;
+use Splicewire\Beam\Notifications\Tests\Fixtures\StubAccountsRecipientResolver;
+use Splicewire\Beam\Notifications\Tests\Fixtures\TeamMemberUser;
 
 it('resolves a literal to: address via the built-in default (mail-only, no accounts)', function () {
     $recipients = (new DefaultRecipientResolver)->resolve(

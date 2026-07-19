@@ -1,8 +1,8 @@
 <?php
 
-namespace Schemastud\Beam\Notifications\Support;
+namespace Splicewire\Beam\Notifications\Support;
 
-use Schemastud\Beam\Notifications\Contracts\SchemaResolver;
+use Splicewire\Beam\Notifications\Contracts\SchemaResolver;
 
 /**
  * The built-in snapshot-fallback schema resolver (spec §S). Reads a schema document the

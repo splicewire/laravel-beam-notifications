@@ -1,6 +1,6 @@
 <?php
 
-namespace Schemastud\Beam\Notifications\Recipients;
+namespace Splicewire\Beam\Notifications\Recipients;
 
 /**
  * One resolved recipient. Two shapes (spec §2), by construction:

@@ -1,6 +1,6 @@
 <?php
 
-namespace Schemastud\Beam\Notifications\Support;
+namespace Splicewire\Beam\Notifications\Support;
 
 use Illuminate\Support\Arr;
 

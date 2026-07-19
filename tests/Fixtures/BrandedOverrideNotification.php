@@ -1,6 +1,6 @@
 <?php
 
-namespace Schemastud\Beam\Notifications\Tests\Fixtures;
+namespace Splicewire\Beam\Notifications\Tests\Fixtures;
 
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;

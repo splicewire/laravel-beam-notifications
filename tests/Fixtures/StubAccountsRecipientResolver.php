@@ -1,13 +1,13 @@
 <?php
 
-namespace Schemastud\Beam\Notifications\Tests\Fixtures;
+namespace Splicewire\Beam\Notifications\Tests\Fixtures;
 
-use Schemastud\Beam\Notifications\Contracts\RecipientResolver;
-use Schemastud\Beam\Notifications\Recipients\DefaultRecipientResolver;
-use Schemastud\Beam\Notifications\Recipients\Recipient;
+use Splicewire\Beam\Notifications\Contracts\RecipientResolver;
+use Splicewire\Beam\Notifications\Recipients\DefaultRecipientResolver;
+use Splicewire\Beam\Notifications\Recipients\Recipient;
 
 /**
- * A stand-in for the accounts-aware resolver that schemastud/laravel-beam-accounts binds when
+ * A stand-in for the accounts-aware resolver that splicewire/laravel-beam-accounts binds when
  * installed (§2). It delegates `to:` to the built-in default and additionally turns `to_roles`
  * / `to_teams` into persistent member models — proving the soft-dep integration point without
  * pulling the whole accounts package into this suite.

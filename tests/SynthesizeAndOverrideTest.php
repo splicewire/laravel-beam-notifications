@@ -2,8 +2,8 @@
 
 use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Support\Facades\Notification;
-use Schemastud\Beam\Notifications\Notifications\BeamNotification;
-use Schemastud\Beam\Notifications\Tests\Fixtures\BrandedOverrideNotification;
+use Splicewire\Beam\Notifications\Notifications\BeamNotification;
+use Splicewire\Beam\Notifications\Tests\Fixtures\BrandedOverrideNotification;
 
 it('synthesizes a generic BeamNotification from x-beam-notify (zero-PHP path)', function () {
     Notification::fake();

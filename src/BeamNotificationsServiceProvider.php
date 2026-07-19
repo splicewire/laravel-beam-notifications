@@ -1,15 +1,15 @@
 <?php
 
-namespace Schemastud\Beam\Notifications;
+namespace Splicewire\Beam\Notifications;
 
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
-use Schemastud\Beam\Models\BeamSubmission;
-use Schemastud\Beam\Notifications\Contracts\RecipientResolver;
-use Schemastud\Beam\Notifications\Contracts\SchemaResolver;
-use Schemastud\Beam\Notifications\Listeners\NotifyOnSubmission;
-use Schemastud\Beam\Notifications\Recipients\DefaultRecipientResolver;
-use Schemastud\Beam\Notifications\Support\SnapshotSchemaResolver;
+use Splicewire\Beam\Models\BeamSubmission;
+use Splicewire\Beam\Notifications\Contracts\RecipientResolver;
+use Splicewire\Beam\Notifications\Contracts\SchemaResolver;
+use Splicewire\Beam\Notifications\Listeners\NotifyOnSubmission;
+use Splicewire\Beam\Notifications\Recipients\DefaultRecipientResolver;
+use Splicewire\Beam\Notifications\Support\SnapshotSchemaResolver;
 
 /**
  * The notify-capability provider. "A beam can notify."

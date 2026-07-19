@@ -1,7 +1,7 @@
 # Laravel Beam Notifications
 
 **"A beam can notify."** The notify capability of the schemastud `beam` family — a peer of
-`schemastud/laravel-beam-accounts` and `-beam-commerce`. It owns the `x-beam-notify` keyword and
+`splicewire/laravel-beam-accounts` and `-beam-commerce`. It owns the `x-beam-notify` keyword and
 the submission → notify wiring, and is deliberately thin: delivery tracking, retry/replay, the
 in-app inbox, and the central relay all live in packages it composes, never re-implements.
 
@@ -41,7 +41,7 @@ The channel constraint is structural: the in-app inbox (`database` channel) requ
 construction.
 
 `to:` works standalone. `to_roles`/`to_teams` resolve through
-`schemastud/laravel-beam-accounts` (a **soft** dependency) — without it, using them is a clear
+`splicewire/laravel-beam-accounts` (a **soft** dependency) — without it, using them is a clear
 hard error (never a silent no-recipient send).
 
 ## The `central` channel (relay) is NOT here

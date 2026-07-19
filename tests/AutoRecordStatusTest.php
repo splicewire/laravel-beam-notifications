@@ -4,7 +4,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Rushing\NotificationStatus\Models\NotificationStatus;
 use Rushing\NotificationStatus\NotificationStatusServiceProvider;
-use Schemastud\Beam\Notifications\Notifications\BeamNotification;
+use Splicewire\Beam\Notifications\Notifications\BeamNotification;
 
 /**
  * FC-14 consumption (§4): beam-notifications writes ZERO tracking code. The moment a
