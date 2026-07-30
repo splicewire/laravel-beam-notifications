@@ -74,8 +74,13 @@ class BeamNotificationsServiceProvider extends ServiceProvider
             return;
         }
 
-        // The ONE post-persist trigger: every beam write path emits SchemaRecordPersisted. No dead
+        // The ONE post-persist trigger: every beam write path emits the persisted-particle event. No dead
         // model-creation listener — a persisted record, whatever produced it, can now notify.
+        //
+        // NOTE (beam-particle-rename 05): this stays `SchemaRecordPersisted`, NOT the `BeamParticlePersisted`
+        // alias — Laravel matches events by CONCRETE class name, and beam-core's RecordWriter dispatches
+        // `new SchemaRecordPersisted(...)`, so a listener registered under the alias would never fire. The
+        // event rename happens ATOMICALLY at T07 (rename the class + its dispatch + this listen together).
         Event::listen(SchemaRecordPersisted::class, [NotifyOnSubmission::class, 'handle']);
     }
 }
