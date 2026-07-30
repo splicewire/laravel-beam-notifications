@@ -21,7 +21,7 @@ it('does nothing when the schema has no x-beam-notify keyword', function () {
 });
 
 it('honors the listen=false config gate', function () {
-    config()->set('beam-notifications.listen', false);
+    config()->set('beam.notifications.listen', false);
 
     // The listener is registered at boot; the runtime gate inside handle() short-circuits.
     Notification::fake();

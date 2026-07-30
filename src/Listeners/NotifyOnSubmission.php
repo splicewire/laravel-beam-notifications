@@ -33,7 +33,7 @@ class NotifyOnSubmission
 
     public function handle(SchemaRecordPersisted $event): void
     {
-        if (! config('beam-notifications.listen', true)) {
+        if (! config('beam.notifications.listen', true)) {
             return;
         }
 
@@ -57,7 +57,7 @@ class NotifyOnSubmission
             $this->dispatcher->dispatch(
                 $notify,
                 $context,
-                (array) config('beam-notifications.default_channels', ['mail']),
+                (array) config('beam.notifications.default_channels', ['mail']),
             );
         } catch (\Throwable $e) {
             report($e);

@@ -43,7 +43,9 @@ class BeamNotificationsServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->mergeConfigFrom(__DIR__.'/../config/beam-notifications.php', 'beam-notifications');
+        // Nested config namespace (beam-write-pipeline ticket 07): config/beam/notifications.php,
+        // read as config('beam.notifications.*') — the beam family reads as one.
+        $this->mergeConfigFrom(__DIR__.'/../config/beam/notifications.php', 'beam.notifications');
 
         $this->app->bind(RecipientResolver::class, DefaultRecipientResolver::class);
         $this->app->bind(SchemaResolver::class, RegistrySchemaResolver::class);
@@ -53,11 +55,11 @@ class BeamNotificationsServiceProvider extends ServiceProvider
     {
         if ($this->app->runningInConsole()) {
             $this->publishes([
-                __DIR__.'/../config/beam-notifications.php' => $this->app->configPath('beam-notifications.php'),
+                __DIR__.'/../config/beam/notifications.php' => $this->app->configPath('beam/notifications.php'),
             ], 'beam-notifications-config');
         }
 
-        if (! config('beam-notifications.listen', true)) {
+        if (! config('beam.notifications.listen', true)) {
             return;
         }
 
