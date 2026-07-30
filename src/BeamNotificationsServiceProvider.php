@@ -5,6 +5,7 @@ namespace Splicewire\Beam\Notifications;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Splicewire\Beam\Events\SchemaRecordPersisted;
+use Splicewire\Beam\Install\BeamInstallManifest;
 use Splicewire\Beam\Notifications\Contracts\RecipientResolver;
 use Splicewire\Beam\Notifications\Contracts\SchemaResolver;
 use Splicewire\Beam\Notifications\Listeners\NotifyOnSubmission;
@@ -57,6 +58,16 @@ class BeamNotificationsServiceProvider extends ServiceProvider
             $this->publishes([
                 __DIR__.'/../config/beam/notifications.php' => $this->app->configPath('beam/notifications.php'),
             ], 'beam-notifications-config');
+        }
+
+        // Self-register into beam-core's install manifest (ticket 08): beam:install publishes this
+        // package's config with the rest of the stack. beam-core never names this package — the
+        // registration pushes DOWN into the manifest from here.
+        if ($this->app->bound(BeamInstallManifest::class)) {
+            $this->app->make(BeamInstallManifest::class)->register(
+                package: 'splicewire/laravel-beam-notifications',
+                publishTags: ['beam-notifications-config'],
+            );
         }
 
         if (! config('beam.notifications.listen', true)) {
