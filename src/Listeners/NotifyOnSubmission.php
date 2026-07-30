@@ -2,14 +2,14 @@
 
 namespace Splicewire\Beam\Notifications\Listeners;
 
-use Splicewire\Beam\Events\SchemaRecordPersisted;
+use Splicewire\Beam\Events\BeamParticlePersisted;
 use Splicewire\Beam\Notifications\Contracts\SchemaResolver;
 use Splicewire\Beam\Notifications\Keywords;
 use Splicewire\Beam\Notifications\Support\NotificationDispatcher;
 
 /**
  * The persisted-record -> notify wiring (beam-write-pipeline ticket 05). Bound to the ONE
- * {@see SchemaRecordPersisted} event every beam write path emits (ADR-0150) — no longer to the retired
+ * {@see BeamParticlePersisted} event every beam write path emits (ADR-0150) — no longer to the retired
  * `BeamSubmission::created` corpse. So a public-intake submission, a Frame edit, an adopted CRUD write,
  * or the generation populator can ALL drive a notification through this single listener.
  *
@@ -31,7 +31,7 @@ class NotifyOnSubmission
         protected NotificationDispatcher $dispatcher,
     ) {}
 
-    public function handle(SchemaRecordPersisted $event): void
+    public function handle(BeamParticlePersisted $event): void
     {
         if (! config('beam.notifications.listen', true)) {
             return;

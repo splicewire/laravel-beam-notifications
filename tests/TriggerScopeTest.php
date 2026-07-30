@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Notification;
 use Splicewire\Beam\Notifications\Notifications\BeamNotification;
 
-it('fires on SchemaRecordPersisted when the schema carries x-beam-notify', function () {
+it('fires on BeamParticlePersisted when the schema carries x-beam-notify', function () {
     Notification::fake();
 
     fireRecordPersisted(notify: ['to' => ['ops@site.test'], 'subject' => 'S', 'template' => 'B']);
@@ -33,6 +33,6 @@ it('honors the listen=false config gate', function () {
 
 it('binds no listener to the retired BeamSubmission creation event', function () {
     // ADR-0138 retired the BeamSubmission model; the old dead-wired `eloquent.created` listener that
-    // fired on that corpse must be gone (ticket 05 rewired the trigger onto SchemaRecordPersisted).
+    // fired on that corpse must be gone (ticket 05 rewired the trigger onto BeamParticlePersisted).
     expect(Event::getListeners('eloquent.created: Splicewire\Beam\Models\BeamSubmission'))->toBe([]);
 });

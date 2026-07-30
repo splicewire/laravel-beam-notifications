@@ -9,14 +9,14 @@ use Spatie\Activitylog\ActivitylogServiceProvider;
 use Spatie\LaravelData\LaravelDataServiceProvider;
 use Spatie\MediaLibrary\MediaLibraryServiceProvider;
 use Splicewire\Beam\BeamServiceProvider;
-use Splicewire\Beam\Events\SchemaRecordPersisted;
+use Splicewire\Beam\Events\BeamParticlePersisted;
 use Splicewire\Beam\Notifications\BeamNotificationsServiceProvider;
 
 abstract class TestCase extends Orchestra
 {
     /**
      * beam-notifications boots on TOP of the beam substrate, listening on the generic
-     * {@see SchemaRecordPersisted} trigger (ticket 05). It does NOT load any
+     * {@see BeamParticlePersisted} trigger (ticket 05). It does NOT load any
      * satellite/relay provider — that absence is the whole point of §3: a headless beam carries no
      * `central` channel. Tests that need the accounts resolver or the `central` channel register a stub
      * explicitly, so the headless default stays honest.

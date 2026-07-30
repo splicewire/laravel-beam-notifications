@@ -4,7 +4,7 @@ namespace Splicewire\Beam\Notifications;
 
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
-use Splicewire\Beam\Events\SchemaRecordPersisted;
+use Splicewire\Beam\Events\BeamParticlePersisted;
 use Splicewire\Beam\Install\BeamInstallManifest;
 use Splicewire\Beam\Notifications\Contracts\RecipientResolver;
 use Splicewire\Beam\Notifications\Contracts\SchemaResolver;
@@ -21,12 +21,12 @@ use Splicewire\Beam\Notifications\Support\RegistrySchemaResolver;
  *   - SchemaResolver   -> RegistrySchemaResolver (record-carried snapshot, then beam's schema
  *     registry by the record's binding). A host with a different registry rebinds it (§S).
  *
- * boot(): listen on {@see SchemaRecordPersisted} (the ONE post-persist signal every beam write
+ * boot(): listen on {@see BeamParticlePersisted} (the ONE post-persist signal every beam write
  * path emits — ADR-0150 / beam-write-pipeline ticket 05), gated by config; publish config.
  *
  * REWIRE (ticket 05): the old trigger was `eloquent.created: Splicewire\Beam\Models\BeamSubmission`
  * — a model ADR-0138 retired, so the listener fired on a corpse. It now listens on the generic
- * `SchemaRecordPersisted` event, so ANY persisted record (public intake, Frame edit, an adopted CRUD
+ * `BeamParticlePersisted` event, so ANY persisted record (public intake, Frame edit, an adopted CRUD
  * controller, the generation populator) can drive a notification, not just a submission.
  *
  * What this provider does NOT do (by design):
@@ -77,10 +77,11 @@ class BeamNotificationsServiceProvider extends ServiceProvider
         // The ONE post-persist trigger: every beam write path emits the persisted-particle event. No dead
         // model-creation listener — a persisted record, whatever produced it, can now notify.
         //
-        // NOTE (beam-particle-rename 05): this stays `SchemaRecordPersisted`, NOT the `BeamParticlePersisted`
-        // alias — Laravel matches events by CONCRETE class name, and beam-core's RecordWriter dispatches
-        // `new SchemaRecordPersisted(...)`, so a listener registered under the alias would never fire. The
-        // event rename happens ATOMICALLY at T07 (rename the class + its dispatch + this listen together).
-        Event::listen(SchemaRecordPersisted::class, [NotifyOnSubmission::class, 'handle']);
+        // NOTE (beam-particle-rename 07): the event is now canonically `BeamParticlePersisted`. Laravel
+        // matches events by CONCRETE class name, and beam-core's ParticleWriter dispatches
+        // `new BeamParticlePersisted(...)`, so this listen MUST name the same concrete class — done
+        // ATOMICALLY at T07 (the class rename + its dispatch flip + this listen, together). A listener
+        // registered under the retired `SchemaRecordPersisted` alias would never fire.
+        Event::listen(BeamParticlePersisted::class, [NotifyOnSubmission::class, 'handle']);
     }
 }
