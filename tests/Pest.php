@@ -1,13 +1,13 @@
 <?php
 
 use Splicewire\Beam\Events\BeamParticlePersisted;
-use Splicewire\Beam\Models\SchemaRecord;
+use Splicewire\Beam\Models\BeamParticle;
 use Splicewire\Beam\Notifications\Tests\TestCase;
 
 uses(TestCase::class)->in('.');
 
 /**
- * Build a SchemaRecord carrying an `x-beam-notify` schema snapshot (under meta.schema, which the default
+ * Build a BeamParticle carrying an `x-beam-notify` schema snapshot (under meta.schema, which the default
  * RegistrySchemaResolver reads first) plus a payload, then emit the ONE beam write-pipeline signal —
  * {@see BeamParticlePersisted} — for it (ticket 05 replaces the retired BeamSubmission::created trigger).
  * The record need not be saved: the listener reads the snapshot + payload straight off the event.
@@ -15,7 +15,7 @@ uses(TestCase::class)->in('.');
  * @param  array<string, mixed>|null  $notify  The x-beam-notify keyword body (null = none).
  * @param  array<string, mixed>  $payload
  */
-function fireRecordPersisted(?array $notify, array $payload = []): SchemaRecord
+function fireRecordPersisted(?array $notify, array $payload = []): BeamParticle
 {
     $schema = ['title' => 'Contact', 'type' => 'object'];
 
@@ -23,7 +23,7 @@ function fireRecordPersisted(?array $notify, array $payload = []): SchemaRecord
         $schema['x-beam-notify'] = $notify;
     }
 
-    $record = new SchemaRecord([
+    $record = new BeamParticle([
         'schema_ref' => 'contact',
         'payload' => $payload,
         'meta' => [
