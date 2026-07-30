@@ -9,15 +9,17 @@ use Spatie\Activitylog\ActivitylogServiceProvider;
 use Spatie\LaravelData\LaravelDataServiceProvider;
 use Spatie\MediaLibrary\MediaLibraryServiceProvider;
 use Splicewire\Beam\BeamServiceProvider;
+use Splicewire\Beam\Events\SchemaRecordPersisted;
 use Splicewire\Beam\Notifications\BeamNotificationsServiceProvider;
 
 abstract class TestCase extends Orchestra
 {
     /**
-     * beam-notifications boots on TOP of the beam substrate (BeamSubmission trigger). It does
-     * NOT load any satellite/relay provider — that absence is the whole point of §3: a headless
-     * beam carries no `central` channel. Tests that need the accounts resolver or the `central`
-     * channel register a stub explicitly, so the headless default stays honest.
+     * beam-notifications boots on TOP of the beam substrate, listening on the generic
+     * {@see SchemaRecordPersisted} trigger (ticket 05). It does NOT load any
+     * satellite/relay provider — that absence is the whole point of §3: a headless beam carries no
+     * `central` channel. Tests that need the accounts resolver or the `central` channel register a stub
+     * explicitly, so the headless default stays honest.
      *
      * @return array<int, class-string>
      */
@@ -51,8 +53,9 @@ abstract class TestCase extends Orchestra
     }
 
     /**
-     * The beam substrate tables (schema_records + beam_submissions) as publish-only stubs — the
-     * test host owns copies, exactly as a single-tenant host would after vendor:publish.
+     * The beam substrate `schema_records` table as a publish-only stub — the test host owns a copy,
+     * exactly as a single-tenant host would after vendor:publish. (The retired `beam_submissions` table
+     * is gone: ADR-0138 dropped the model and ticket 05 rewired the trigger off it.)
      */
     protected function migrateBeamTables(): void
     {
@@ -61,17 +64,6 @@ abstract class TestCase extends Orchestra
             $table->string('schema_ref')->nullable();
             $table->json('payload')->nullable();
             $table->json('meta')->nullable();
-            $table->timestamps();
-        });
-
-        Schema::create('beam_submissions', function (Blueprint $table) {
-            $table->uuid('id')->primary();
-            $table->uuid('schema_record_id')->index();
-            $table->uuid('submitted_by')->nullable();
-            $table->timestamp('submitted_at')->nullable();
-            $table->string('source')->nullable();
-            $table->string('channel')->nullable();
-            $table->json('context')->nullable();
             $table->timestamps();
         });
     }

@@ -22,16 +22,15 @@
         "illuminate/contracts": "^11.0|^12.0|^13.0",
         "illuminate/notifications": "^11.0|^12.0|^13.0",
         "illuminate/support": "^11.0|^12.0|^13.0",
+        "rushing/laravel-notification-status": "*",
         "splicewire/laravel-beam": "*"
     },
     "require-dev": {
         "laravel/pint": "^1.0",
         "orchestra/testbench": "^9.0|^10.0",
-        "pestphp/pest": "^2.0|^3.0",
-        "rushing/laravel-notification-status": "*"
+        "pestphp/pest": "^2.0|^3.0"
     },
     "suggest": {
-        "rushing/laravel-notification-status": "Durable pending/sent/failed/given_up delivery ledger with retry + replay. Consumed automatically through Laravel's native notification events — no wiring needed.",
         "splicewire/laravel-beam-accounts": "Resolves the to_roles / to_teams recipient keys (roles enum + team membership). Without it, only the address-only `to:` key works; to_roles/to_teams throw a clear boot/first-send error."
     },
     "autoload": {
