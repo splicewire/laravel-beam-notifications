@@ -23,7 +23,7 @@ interface SchemaResolver
      * Return the schema document for the given record, or an empty array when none is
      * resolvable (the listener then does nothing — no `x-beam-notify`, no send).
      *
-     * @param  object  $record  The SchemaRecord (or host record) the submission references.
+     * @param  object  $record  The beam particle (or host record) the submission references.
      * @return array<string, mixed>
      */
     public function resolve(object $record): array;

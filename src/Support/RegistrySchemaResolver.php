@@ -2,7 +2,7 @@
 
 namespace Splicewire\Beam\Notifications\Support;
 
-use Splicewire\Beam\Concerns\PersistsSchemaRecord;
+use Splicewire\Beam\Concerns\PersistsBeamParticle;
 use Splicewire\Beam\Notifications\Contracts\SchemaResolver;
 use Splicewire\Beam\Schema\Contracts\SchemaTargetResolver;
 
@@ -12,10 +12,10 @@ use Splicewire\Beam\Schema\Contracts\SchemaTargetResolver;
  *
  *  1. a snapshot the record already carries — a `schema` attribute or `meta.schema` (the old
  *     {@see SnapshotSchemaResolver} behaviour, kept so a host that embeds the snapshot still works);
- *  2. beam's canonical schema registry — resolve the record's TYPE ({@see PersistsSchemaRecord::recordType()})
- *     through the bound {@see SchemaTargetResolver}.
+ *  2. beam's canonical schema registry — resolve the record's TYPE (via the record's `recordType()`)
+ *     through the bound {@see SchemaTargetResolver}. ({@see PersistsBeamParticle::recordType()})
  *
- * The registry tier is what makes public-intake notifications work: a `SchemaRecord` written through
+ * The registry tier is what makes public-intake notifications work: a beam particle written through
  * the public door carries its `schema_ref` (not a full schema snapshot), so the keyword is read from the
  * registered target schema, not from the record. Returns `[]` when nothing resolves — the listener then
  * does nothing (no `x-beam-notify`, no send).

@@ -81,7 +81,7 @@ class BeamNotificationsServiceProvider extends ServiceProvider
         // matches events by CONCRETE class name, and beam-core's ParticleWriter dispatches
         // `new BeamParticlePersisted(...)`, so this listen MUST name the same concrete class — done
         // ATOMICALLY at T07 (the class rename + its dispatch flip + this listen, together). A listener
-        // registered under the retired `SchemaRecordPersisted` alias would never fire.
+        // registered under the old (now-removed) event name would never fire.
         Event::listen(BeamParticlePersisted::class, [NotifyOnSubmission::class, 'handle']);
     }
 }
