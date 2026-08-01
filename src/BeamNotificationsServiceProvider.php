@@ -60,7 +60,7 @@ class BeamNotificationsServiceProvider extends ServiceProvider
             ], 'beam-notifications-config');
         }
 
-        // Self-register into beam-core's install manifest (ticket 08): beam:install publishes this
+        // Self-register into beam-core's install manifest (ticket 08): splicewire:beam:install publishes this
         // package's config with the rest of the stack. beam-core never names this package — the
         // registration pushes DOWN into the manifest from here.
         if ($this->app->bound(BeamInstallManifest::class)) {
