@@ -20,6 +20,14 @@ return [
     'listen' => true,
 
     /*
+    | UBIQUITOUS MIGRATION PROVISIONING (recohere T10). The `beam_notifications` outbox is a
+    | package-owned shared migration (database/migrations/shared/), auto-run in BOTH the central and
+    | every tenant pass by BeamNotificationsServiceProvider::bootMigrations(). Defaults on; a retrofit
+    | host that hand-owns the table sets this false to opt out.
+    */
+    'register_migrations' => true,
+
+    /*
     | The generic driver's default channel list, used when a schema's `x-beam-notify`
     | omits `channels`. via() always intersects this with the app's registered channel
     | drivers, so listing `central` here on a headless beam (no relay provider) is a

@@ -54,6 +54,8 @@ class BeamNotificationsServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->bootMigrations();
+
         if ($this->app->runningInConsole()) {
             $this->publishes([
                 __DIR__.'/../config/beam/notifications.php' => $this->app->configPath('beam/notifications.php'),
@@ -83,5 +85,40 @@ class BeamNotificationsServiceProvider extends ServiceProvider
         // ATOMICALLY at T07 (the class rename + its dispatch flip + this listen, together). A listener
         // registered under the old (now-removed) event name would never fire.
         Event::listen(BeamParticlePersisted::class, [NotifyOnSubmission::class, 'handle']);
+    }
+
+    /**
+     * Home the `beam_notifications` outbox with a **ubiquitous, context-following** shape (recohere T10):
+     * the SAME migration dir runs in BOTH migration passes, so the table exists identically in central
+     * and every tenant. Mirrors beam-ux's BeamUxServiceProvider::bootMigrations() (named in prose, not
+     * imported) / beam-core's own bootMigrations():
+     *
+     *  - CENTRAL — {@see loadMigrationsFrom()} registers the shared dir, so a plain `migrate` runs it.
+     *  - TENANT — pushed onto Stancl's `config('tenancy.migration_parameters.--path')` array (no
+     *    auto-discovery), idempotently, so `tenants:migrate` runs the same dir. (Only central forms
+     *    notify, so the tenant copy stays empty — but a uniform substrate is cheaper than a branch.)
+     *
+     * Gated by `config('beam.notifications.register_migrations', true)` — defaults on, matching the
+     * beam-family opt-out shape.
+     */
+    protected function bootMigrations(): void
+    {
+        if (! config('beam.notifications.register_migrations', true)) {
+            return;
+        }
+
+        $sharedDir = realpath(__DIR__.'/../database/migrations/shared')
+            ?: __DIR__.'/../database/migrations/shared';
+
+        // Central estate — auto-discovered by `migrate`.
+        $this->loadMigrationsFrom($sharedDir);
+
+        // Tenant estate — pushed onto Stancl's `--path` array (no auto-discovery). Same dir, so the
+        // table shape is identical central + tenant.
+        $paths = config('tenancy.migration_parameters.--path', []);
+
+        if (! in_array($sharedDir, $paths, true)) {
+            config()->push('tenancy.migration_parameters.--path', $sharedDir);
+        }
     }
 }
