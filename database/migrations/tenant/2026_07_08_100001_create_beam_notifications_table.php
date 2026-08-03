@@ -7,21 +7,22 @@ use Splicewire\Beam\Beam;
 use Splicewire\Beam\Notifications\BeamNotificationsServiceProvider;
 
 /**
- * The notifications outbox — the notify-capability arm's own ledger. Package-owned, ubiquitously
- * provisioned (recohere T10): the same shared dir runs central + every tenant via
- * {@see BeamNotificationsServiceProvider::bootMigrations()}. This
- * SQUASHES the host-owned `submission_notifications`→`beam_notifications` rename shim (central-only)
- * into one clean greenfield create.
- *
- * Homed here (research/01 C14 — the notifications half): beam-notifications requires beam-core, so it
- * can route the table name through {@see Beam::table()}. Only genuinely-central forms notify (marketing
- * leads, relay inbound); per-tenant circuit intake records no outbox row (guarded at the delivery
- * seam). Running the same dir in both passes is harmless — the tenant copy simply stays empty.
+ * TENANT TWIN of the ubiquitous `beam_notifications` outbox (recohere T10). Identical DDL to the
+ * central migration one dir up; carries the dup-guard `if (Schema::hasTable(...)) return;` because a
+ * host that runs its central + tenant passes into one schema (or re-runs the tenant pass) would
+ * otherwise collide on the already-created table. Published into the host's database/migrations/tenant/
+ * by {@see BeamNotificationsServiceProvider::bootMigrations()} (native publishesMigrations, verbatim
+ * copy). Only central forms notify, so this tenant copy typically stays empty — but a uniform substrate
+ * is cheaper than a branch.
  */
 return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasTable(Beam::table('notifications'))) {
+            return;
+        }
+
         Schema::create(Beam::table('notifications'), function (Blueprint $table): void {
             $table->uuid('id')->primary();
             $table->uuid('submission_id')->nullable()->index();

@@ -54,12 +54,12 @@ class BeamNotificationsServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        $this->bootMigrations();
-
         if ($this->app->runningInConsole()) {
             $this->publishes([
                 __DIR__.'/../config/beam/notifications.php' => $this->app->configPath('beam/notifications.php'),
             ], 'beam-notifications-config');
+
+            $this->bootMigrations();
         }
 
         // Self-register into beam-core's install manifest (ticket 08): splicewire:beam:install publishes this
@@ -88,37 +88,31 @@ class BeamNotificationsServiceProvider extends ServiceProvider
     }
 
     /**
-     * Home the `beam_notifications` outbox with a **ubiquitous, context-following** shape (recohere T10):
-     * the SAME migration dir runs in BOTH migration passes, so the table exists identically in central
-     * and every tenant. Mirrors beam-ux's BeamUxServiceProvider::bootMigrations() (named in prose, not
-     * imported) / beam-core's own bootMigrations():
+     * PUBLISH-ONLY ubiquitous migrations — the idiomatic pattern for a PLAIN ServiceProvider, mirroring
+     * the beam-workflows exemplar (commit 994aba1) / beam-core PackageServiceProvider (undo of the
+     * recohere runtime `loadMigrationsFrom` + Stancl `--path` push).
      *
-     *  - CENTRAL — {@see loadMigrationsFrom()} registers the shared dir, so a plain `migrate` runs it.
-     *  - TENANT — pushed onto Stancl's `config('tenancy.migration_parameters.--path')` array (no
-     *    auto-discovery), idempotently, so `tenants:migrate` runs the same dir. (Only central forms
-     *    notify, so the tenant copy stays empty — but a uniform substrate is cheaper than a branch.)
+     * A plain provider has no spatie/laravel-package-tools machinery, so this uses Laravel's native
+     * {@see ServiceProvider::publishesMigrations()} (Laravel 11+). It does NOT loadMigrationsFrom and
+     * does NOT push onto `tenancy.migration_parameters.--path`: the package never runs these at runtime.
+     * `vendor:publish --tag=beam-notifications-migrations` drops the copies into the HOST — the central
+     * migration into `database/migrations/` and the guarded tenant twin into `database/migrations/tenant/`
+     * — and the host's `migrate` + `tenants:migrate` passes run them.
      *
-     * Gated by `config('beam.notifications.register_migrations', true)` — defaults on, matching the
-     * beam-family opt-out shape.
+     * UBIQUITOUS: the `beam_notifications` outbox exists identically in central and every tenant, so this
+     * ships BOTH a central migration and a `Schema::hasTable()`-guarded tenant twin (the dup-guard is
+     * exactly the ubiquitous-table's tenant-twin case).
+     *
+     * The publishable source files carry a valid natural timestamp prefix (2026_07_08_100001, inherited
+     * from the squashed shim) and ship as plain `.php`. With
+     * `database.migrations.update_date_on_publish` at its default (false), native `publishesMigrations`
+     * copies each file verbatim — one correctly-timestamped migration per pass, no double-stamp.
      */
     protected function bootMigrations(): void
     {
-        if (! config('beam.notifications.register_migrations', true)) {
-            return;
-        }
-
-        $sharedDir = realpath(__DIR__.'/../database/migrations/shared')
-            ?: __DIR__.'/../database/migrations/shared';
-
-        // Central estate — auto-discovered by `migrate`.
-        $this->loadMigrationsFrom($sharedDir);
-
-        // Tenant estate — pushed onto Stancl's `--path` array (no auto-discovery). Same dir, so the
-        // table shape is identical central + tenant.
-        $paths = config('tenancy.migration_parameters.--path', []);
-
-        if (! in_array($sharedDir, $paths, true)) {
-            config()->push('tenancy.migration_parameters.--path', $sharedDir);
-        }
+        $this->publishesMigrations([
+            __DIR__.'/../database/migrations' => $this->app->databasePath('migrations'),
+            __DIR__.'/../database/migrations/tenant' => $this->app->databasePath('migrations/tenant'),
+        ], 'beam-notifications-migrations');
     }
 }
