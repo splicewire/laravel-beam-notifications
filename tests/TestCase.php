@@ -63,8 +63,8 @@ abstract class TestCase extends Orchestra
      * exactly as a single-tenant host would after vendor:publish. This package's own tests only ever
      * fire {@see BeamParticlePersisted} over generic {@see \Splicewire\Beam\Models\BeamParticle}
      * fixtures (see `fireRecordPersisted()` in Pest.php) — never a {@see \Splicewire\Beam\Models\BeamSubmission},
-     * which is written by `RecordsSubmissions` (homed in `splicewire/laravel-beam-accounts`, not
-     * here — see its own test suite for `beam_submissions` coverage).
+     * which is written by `Splicewire\Beam\Submissions\RecordsSubmissions` (homed in beam-core, not
+     * here — see that package's own test suite for `beam_submissions` coverage).
      */
     protected function migrateBeamTables(): void
     {
