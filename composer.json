@@ -28,7 +28,8 @@
     "require-dev": {
         "laravel/pint": "^1.0",
         "orchestra/testbench": "^9.0|^10.0",
-        "pestphp/pest": "^2.0|^3.0"
+        "pestphp/pest": "^2.0|^3.0",
+        "spatie/laravel-medialibrary": "^11.0"
     },
     "suggest": {
         "splicewire/laravel-beam-accounts": "Resolves the to_roles / to_teams recipient keys (roles enum + team membership). Without it, only the address-only `to:` key works; to_roles/to_teams throw a clear boot/first-send error."
@@ -76,6 +77,20 @@
         {
             "type": "path",
             "url": "../../rushing/laravel-notification-status",
+            "options": {
+                "symlink": true
+            }
+        },
+        {
+            "type": "path",
+            "url": "../../rushing/*",
+            "options": {
+                "symlink": true
+            }
+        },
+        {
+            "type": "path",
+            "url": "../../schemastud/*",
             "options": {
                 "symlink": true
             }

@@ -5,6 +5,9 @@ namespace Splicewire\Beam\Notifications\Tests;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Orchestra\Testbench\TestCase as Orchestra;
+use Rushing\PermissionCascade\PermissionCascadeServiceProvider;
+use Rushing\Versioning\VersioningServiceProvider;
+use Schemastud\DataSchemas\LaravelDataSchemasServiceProvider;
 use Spatie\Activitylog\ActivitylogServiceProvider;
 use Spatie\LaravelData\LaravelDataServiceProvider;
 use Spatie\MediaLibrary\MediaLibraryServiceProvider;
@@ -30,6 +33,9 @@ abstract class TestCase extends Orchestra
             MediaLibraryServiceProvider::class,
             ActivitylogServiceProvider::class,
             LaravelDataServiceProvider::class,
+            VersioningServiceProvider::class,
+            LaravelDataSchemasServiceProvider::class,
+            PermissionCascadeServiceProvider::class,
             BeamNotificationsServiceProvider::class,
         ];
     }
@@ -54,8 +60,11 @@ abstract class TestCase extends Orchestra
 
     /**
      * The beam substrate `schema_records` table as a publish-only stub — the test host owns a copy,
-     * exactly as a single-tenant host would after vendor:publish. (The retired `beam_submissions` table
-     * is gone: ADR-0138 dropped the model and ticket 05 rewired the trigger off it.)
+     * exactly as a single-tenant host would after vendor:publish. This package's own tests only ever
+     * fire {@see BeamParticlePersisted} over generic {@see \Splicewire\Beam\Models\BeamParticle}
+     * fixtures (see `fireRecordPersisted()` in Pest.php) — never a {@see \Splicewire\Beam\Models\BeamSubmission},
+     * which is written by `RecordsSubmissions` (homed in `splicewire/laravel-beam-accounts`, not
+     * here — see its own test suite for `beam_submissions` coverage).
      */
     protected function migrateBeamTables(): void
     {

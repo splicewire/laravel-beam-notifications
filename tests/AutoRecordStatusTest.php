@@ -38,7 +38,7 @@ beforeEach(function () {
 
 it('auto-records delivery status via FC-14 with zero coupling code in beam', function () {
     // NOT faked — the real (array) mail transport sends, so the native events fire.
-    fireSubmission(
+    fireRecordPersisted(
         notify: ['to' => ['ops@site.test'], 'channels' => ['mail'], 'subject' => 'S', 'template' => 'B'],
         payload: ['name' => 'Ada'],
     );

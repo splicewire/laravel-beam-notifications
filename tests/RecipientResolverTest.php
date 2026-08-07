@@ -35,7 +35,7 @@ it('interpolates a payload-ref to: address (`{{ payload.email }}`)', function ()
 it('sends the generic notification on-demand to a to: address', function () {
     Notification::fake();
 
-    fireSubmission(
+    fireRecordPersisted(
         notify: ['to' => ['ops@site.test'], 'subject' => 'Hi', 'template' => 'x'],
     );
 
@@ -68,7 +68,7 @@ it('resolves to_roles / to_teams through a bound accounts-aware resolver to noti
 
     Notification::fake();
 
-    fireSubmission(
+    fireRecordPersisted(
         notify: [
             'to_roles' => ['admin'],
             'to_teams' => ['team-1'],

@@ -8,7 +8,7 @@ use Splicewire\Beam\Notifications\Tests\Fixtures\BrandedOverrideNotification;
 it('synthesizes a generic BeamNotification from x-beam-notify (zero-PHP path)', function () {
     Notification::fake();
 
-    fireSubmission(
+    fireRecordPersisted(
         notify: [
             'to' => ['ops@site.test'],
             'channels' => ['mail'],
@@ -33,7 +33,7 @@ it('synthesizes a generic BeamNotification from x-beam-notify (zero-PHP path)', 
 it('dispatches the host FQCN override instead of the generic when x-beam-notify.notification is set', function () {
     Notification::fake();
 
-    fireSubmission(
+    fireRecordPersisted(
         notify: [
             'to' => ['ops@site.test'],
             'notification' => BrandedOverrideNotification::class,
@@ -51,7 +51,7 @@ it('dispatches the host FQCN override instead of the generic when x-beam-notify.
 it('renders the generic mail subject/body from the payload via the logic-less interpolator', function () {
     Notification::fake();
 
-    fireSubmission(
+    fireRecordPersisted(
         notify: [
             'to' => ['ops@site.test'],
             'subject' => 'Hi {{ payload.name }}',
