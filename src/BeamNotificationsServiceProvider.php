@@ -3,11 +3,14 @@
 namespace Splicewire\Beam\Notifications;
 
 use Illuminate\Support\Facades\Event;
-use Illuminate\Support\ServiceProvider;
+use Spatie\LaravelPackageTools\Package;
+use Spatie\LaravelPackageTools\PackageServiceProvider;
+use Splicewire\Beam\Doctor\BeamDoctorManifest;
 use Splicewire\Beam\Events\BeamParticlePersisted;
 use Splicewire\Beam\Install\BeamInstallManifest;
 use Splicewire\Beam\Notifications\Contracts\RecipientResolver;
 use Splicewire\Beam\Notifications\Contracts\SchemaResolver;
+use Splicewire\Beam\Notifications\Doctor\BeamNotificationsMigrationsAudit;
 use Splicewire\Beam\Notifications\Listeners\NotifyOnSubmission;
 use Splicewire\Beam\Notifications\Recipients\DefaultRecipientResolver;
 use Splicewire\Beam\Notifications\Support\RegistrySchemaResolver;
@@ -15,13 +18,13 @@ use Splicewire\Beam\Notifications\Support\RegistrySchemaResolver;
 /**
  * The notify-capability provider. "A beam can notify."
  *
- * register(): merge config; bind the two seams to their built-in defaults —
+ * packageRegistered(): merge config; bind the two seams to their built-in defaults —
  *   - RecipientResolver -> DefaultRecipientResolver (address-only `to:`). beam-accounts'
  *     provider REBINDS this to its accounts-aware resolver when installed (soft dep, §2).
  *   - SchemaResolver   -> RegistrySchemaResolver (record-carried snapshot, then beam's schema
  *     registry by the record's binding). A host with a different registry rebinds it (§S).
  *
- * boot(): listen on {@see BeamParticlePersisted} (the ONE post-persist signal every beam write
+ * packageBooted(): listen on {@see BeamParticlePersisted} (the ONE post-persist signal every beam write
  * path emits — ADR-0150 / beam-write-pipeline ticket 05), gated by config; publish config.
  *
  * REWIRE (ticket 05): the old trigger was `eloquent.created: Splicewire\Beam\Models\BeamSubmission`
@@ -39,36 +42,58 @@ use Splicewire\Beam\Notifications\Support\RegistrySchemaResolver;
  *     (DESIGN §7 L4 decision): it subscribes to Laravel's native notification events globally, so
  *     the moment a BeamNotification is sent it is recorded automatically — no outbox, no coupling
  *     here. The dissolved submissions package's bespoke outbox is NOT folded in; it is deleted.
+ *
+ * MIGRATIONS: the `beam_notifications` outbox ships as a PUBLISH-ONLY spatie/laravel-package-tools
+ * stub — the idiomatic pattern for a PackageServiceProvider (mirrors beam-core's own conversion).
+ * `runsMigrations` stays FALSE (the package-tools default), so beam-notifications never loads this
+ * at runtime; `vendor:publish --tag=beam-notifications-migrations` re-stamps + sequences a timestamped
+ * copy into the HOST at install time. UBIQUITOUS table (central + every tenant — "everything is
+ * shared by default"): publishes to the SINGLE `database/migrations/shared/` destination, not a
+ * duplicated flat+tenant pair, registered via `->hasMigrations([...])` in
+ * {@see self::configurePackage()}. beam-tenancy's `registerSharedMigrationsPath()` is what runs
+ * `database/migrations/shared/` in both the central `migrate` pass and Stancl's tenant pass.
  */
-class BeamNotificationsServiceProvider extends ServiceProvider
+class BeamNotificationsServiceProvider extends PackageServiceProvider
 {
-    public function register(): void
+    public function configurePackage(Package $package): void
     {
-        // Nested config namespace (beam-write-pipeline ticket 07): config/beam/notifications.php,
-        // read as config('beam.notifications.*') — the beam family reads as one.
-        $this->mergeConfigFrom(__DIR__.'/../config/beam/notifications.php', 'beam.notifications');
+        $package
+            ->name('laravel-beam-notifications')
+            // Nested config namespace (beam-write-pipeline ticket 07): config/beam/notifications.php,
+            // read as config('beam.notifications.*') — the beam family reads as one.
+            ->hasConfigFile('beam/notifications')
+            // The notifications outbox ships as a PUBLISH-ONLY stub (see class docblock). UBIQUITOUS
+            // (central + every tenant), so it publishes to the single `shared/` destination.
+            ->hasMigrations([
+                'shared/create_beam_notifications_table',
+            ]);
+    }
 
+    public function packageRegistered(): void
+    {
         $this->app->bind(RecipientResolver::class, DefaultRecipientResolver::class);
         $this->app->bind(SchemaResolver::class, RegistrySchemaResolver::class);
     }
 
-    public function boot(): void
+    public function packageBooted(): void
     {
-        if ($this->app->runningInConsole()) {
-            $this->publishes([
-                __DIR__.'/../config/beam/notifications.php' => $this->app->configPath('beam/notifications.php'),
-            ], 'beam-notifications-config');
-
-            $this->bootMigrations();
-        }
-
         // Self-register into beam-core's install manifest (ticket 08): splicewire:beam:install publishes this
         // package's config with the rest of the stack. beam-core never names this package — the
         // registration pushes DOWN into the manifest from here.
         if ($this->app->bound(BeamInstallManifest::class)) {
             $this->app->make(BeamInstallManifest::class)->register(
                 package: 'splicewire/laravel-beam-notifications',
-                publishTags: ['beam-notifications-config'],
+                publishTags: ['beam-notifications-config', 'beam-notifications-migrations'],
+            );
+        }
+
+        // beam-notifications is itself an "operator" of the estate-wide publish-only stub migrations
+        // convention — self-registers the doctor/operator check on ITS OWN migrations, same as every
+        // other beam-* package registers it on theirs (guarded: a host predating the manifest still boots).
+        if ($this->app->bound(BeamDoctorManifest::class)) {
+            $this->app->make(BeamDoctorManifest::class)->register(
+                'splicewire/laravel-beam-notifications',
+                BeamNotificationsMigrationsAudit::class,
             );
         }
 
@@ -85,34 +110,5 @@ class BeamNotificationsServiceProvider extends ServiceProvider
         // ATOMICALLY at T07 (the class rename + its dispatch flip + this listen, together). A listener
         // registered under the old (now-removed) event name would never fire.
         Event::listen(BeamParticlePersisted::class, [NotifyOnSubmission::class, 'handle']);
-    }
-
-    /**
-     * PUBLISH-ONLY ubiquitous migrations — the idiomatic pattern for a PLAIN ServiceProvider, mirroring
-     * the beam-workflows exemplar (commit 994aba1) / beam-core PackageServiceProvider (undo of the
-     * recohere runtime `loadMigrationsFrom` + Stancl `--path` push).
-     *
-     * A plain provider has no spatie/laravel-package-tools machinery, so this uses Laravel's native
-     * {@see ServiceProvider::publishesMigrations()} (Laravel 11+). It does NOT loadMigrationsFrom and
-     * does NOT push onto `tenancy.migration_parameters.--path`: the package never runs these at runtime.
-     * `vendor:publish --tag=beam-notifications-migrations` drops the copies into the HOST — the central
-     * migration into `database/migrations/` and the guarded tenant twin into `database/migrations/tenant/`
-     * — and the host's `migrate` + `tenants:migrate` passes run them.
-     *
-     * UBIQUITOUS: the `beam_notifications` outbox exists identically in central and every tenant, so this
-     * ships BOTH a central migration and a `Schema::hasTable()`-guarded tenant twin (the dup-guard is
-     * exactly the ubiquitous-table's tenant-twin case).
-     *
-     * The publishable source files carry a valid natural timestamp prefix (2026_07_08_100001, inherited
-     * from the squashed shim) and ship as plain `.php`. With
-     * `database.migrations.update_date_on_publish` at its default (false), native `publishesMigrations`
-     * copies each file verbatim — one correctly-timestamped migration per pass, no double-stamp.
-     */
-    protected function bootMigrations(): void
-    {
-        $this->publishesMigrations([
-            __DIR__.'/../database/migrations' => $this->app->databasePath('migrations'),
-            __DIR__.'/../database/migrations/tenant' => $this->app->databasePath('migrations/tenant'),
-        ], 'beam-notifications-migrations');
     }
 }

@@ -7,13 +7,16 @@ use Splicewire\Beam\Beam;
 use Splicewire\Beam\Notifications\BeamNotificationsServiceProvider;
 
 /**
- * TENANT TWIN of the ubiquitous `beam_notifications` outbox (recohere T10). Identical DDL to the
- * central migration one dir up; carries the dup-guard `if (Schema::hasTable(...)) return;` because a
- * host that runs its central + tenant passes into one schema (or re-runs the tenant pass) would
- * otherwise collide on the already-created table. Published into the host's database/migrations/tenant/
- * by {@see BeamNotificationsServiceProvider::bootMigrations()} (native publishesMigrations, verbatim
- * copy). Only central forms notify, so this tenant copy typically stays empty — but a uniform substrate
- * is cheaper than a branch.
+ * The notifications outbox — the notify-capability arm's own ledger. SHARED (central + every tenant,
+ * the estate's "everything is shared by default" convention): published as a PUBLISH-ONLY
+ * spatie/laravel-package-tools stub (`runsMigrations` FALSE) to the SINGLE `database/migrations/shared/`
+ * destination via `configurePackage()`'s `->hasMigrations([...])` in
+ * {@see BeamNotificationsServiceProvider} (`vendor:publish --tag=beam-notifications-migrations`) — one
+ * file, not duplicated DDL. beam-tenancy's `registerSharedMigrationsPath()` runs that one directory in
+ * BOTH the central `migrate` pass and Stancl's tenant pass. Carries the dup-guard
+ * `if (Schema::hasTable(...)) return;` for a host that migrates both passes into one schema (the
+ * shared-test-DB harness). Only central forms notify, so the tenant-side rows typically stay empty —
+ * but a uniform substrate is cheaper than a branch.
  */
 return new class extends Migration
 {
