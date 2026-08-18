@@ -5,6 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Splicewire\Beam\Facades\Beam;
 use Splicewire\Beam\Notifications\BeamNotificationsServiceProvider;
+use Splicewire\Beam\Schema\ConvergentTable;
 
 /**
  * The notifications outbox — the notify-capability arm's own ledger. SHARED (central + every tenant,
@@ -13,34 +14,32 @@ use Splicewire\Beam\Notifications\BeamNotificationsServiceProvider;
  * destination via `configurePackage()`'s `->hasMigrations([...])` in
  * {@see BeamNotificationsServiceProvider} (`vendor:publish --tag=beam-notifications-migrations`) — one
  * file, not duplicated DDL. beam-tenancy's `registerSharedMigrationsPath()` runs that one directory in
- * BOTH the central `migrate` pass and Stancl's tenant pass. Carries the dup-guard
- * `if (Schema::hasTable(...)) return;` for a host that migrates both passes into one schema (the
- * shared-test-DB harness). Only central forms notify, so the tenant-side rows typically stay empty —
+ * BOTH the central `migrate` pass and Stancl's tenant pass. Carries the CONVERGENT guard
+ * (`docs/agents/convergent-migration-guards.convention.md` in laravel-beam) for a host that migrates
+ * both passes into one schema (the shared-test-DB harness). Only central forms notify, so the tenant-side rows typically stay empty —
  * but a uniform substrate is cheaper than a branch.
  */
 return new class extends Migration
 {
     public function up(): void
     {
-        if (Schema::hasTable(Beam::table('notifications'))) {
-            return;
-        }
-
-        Schema::create(Beam::table('notifications'), function (Blueprint $table): void {
-            $table->uuid('id')->primary();
-            $table->uuid('submission_id')->nullable()->index();
-            $table->string('form_key')->index();
-            $table->string('channel')->default('mail');
-            $table->string('recipient')->nullable();
-            $table->string('subject')->nullable();
-            $table->json('intent')->nullable();
-            $table->string('notifier')->nullable();
-            $table->string('status')->default('pending')->index();
-            $table->unsignedInteger('attempts')->default(0);
-            $table->text('last_error')->nullable();
-            $table->timestamp('sent_at')->nullable();
-            $table->timestamps();
-        });
+        ConvergentTable::named(Beam::table('notifications'))
+            ->define(function (Blueprint $table): void {
+                $table->uuid('id')->primary();
+                $table->uuid('submission_id')->nullable()->index();
+                $table->string('form_key')->index();
+                $table->string('channel')->default('mail');
+                $table->string('recipient')->nullable();
+                $table->string('subject')->nullable();
+                $table->json('intent')->nullable();
+                $table->string('notifier')->nullable();
+                $table->string('status')->default('pending')->index();
+                $table->unsignedInteger('attempts')->default(0);
+                $table->text('last_error')->nullable();
+                $table->timestamp('sent_at')->nullable();
+                $table->timestamps();
+            })
+            ->assert();
     }
 
     public function down(): void
