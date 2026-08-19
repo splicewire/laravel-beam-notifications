@@ -23,7 +23,8 @@
         "illuminate/notifications": "^11.0|^12.0|^13.0",
         "illuminate/support": "^11.0|^12.0|^13.0",
         "rushing/laravel-notification-status": "*",
-        "splicewire/laravel-beam": "*"
+        "splicewire/laravel-beam": "*",
+        "rushing/laravel-schema-convergence": "*"
     },
     "require-dev": {
         "laravel/pint": "^1.0",

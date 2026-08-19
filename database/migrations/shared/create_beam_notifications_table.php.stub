@@ -5,7 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Splicewire\Beam\Facades\Beam;
 use Splicewire\Beam\Notifications\BeamNotificationsServiceProvider;
-use Splicewire\Beam\Schema\ConvergentTable;
+use Rushing\SchemaConvergence\ConvergentTable;
 
 /**
  * The notifications outbox — the notify-capability arm's own ledger. SHARED (central + every tenant,
@@ -15,7 +15,7 @@ use Splicewire\Beam\Schema\ConvergentTable;
  * {@see BeamNotificationsServiceProvider} (`vendor:publish --tag=beam-notifications-migrations`) — one
  * file, not duplicated DDL. beam-tenancy's `registerSharedMigrationsPath()` runs that one directory in
  * BOTH the central `migrate` pass and Stancl's tenant pass. Carries the CONVERGENT guard
- * (`docs/agents/convergent-migration-guards.convention.md` in laravel-beam) for a host that migrates
+ * (`docs/agents/convergent-migration-guards.convention.md` in rushing/laravel-schema-convergence) for a host that migrates
  * both passes into one schema (the shared-test-DB harness). Only central forms notify, so the tenant-side rows typically stay empty —
  * but a uniform substrate is cheaper than a branch.
  */
