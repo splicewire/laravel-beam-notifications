@@ -3,9 +3,9 @@
 namespace Splicewire\Beam\Notifications\Listeners;
 
 use Splicewire\Beam\Events\BeamParticlePersisted;
-use Splicewire\Beam\Notifications\Contracts\SchemaResolver;
 use Splicewire\Beam\Notifications\Keywords;
 use Splicewire\Beam\Notifications\Support\NotificationDispatcher;
+use Splicewire\Beam\Notifications\Support\RegistrySchemaResolver;
 
 /**
  * The persisted-record -> notify wiring (beam-write-pipeline ticket 05). Bound to the ONE
@@ -27,7 +27,7 @@ use Splicewire\Beam\Notifications\Support\NotificationDispatcher;
 class NotifyOnSubmission
 {
     public function __construct(
-        protected SchemaResolver $schemaResolver,
+        protected RegistrySchemaResolver $schemaResolver,
         protected NotificationDispatcher $dispatcher,
     ) {}
 

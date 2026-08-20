@@ -81,7 +81,13 @@ A host that wants real templating uses the `notification:` override and owns its
 | binding | default | rebind to |
 |---|---|---|
 | `RecipientResolver` | address-only `to:` | beam-accounts' accounts-aware resolver (`to_roles`/`to_teams`) |
-| `SchemaResolver` | record-carried snapshot (`schema` / `meta.schema`) | a `schema_ref`-canonical registry resolver |
+
+Schema resolution is deliberately **not** a seam here. `RegistrySchemaResolver` is a concrete class
+the listener depends on directly: it reads a snapshot frozen on the record (`schema` /
+`meta.schema`), then falls back to beam-core's `SchemaTargetResolver` port by the record's
+`schema_ref`. It carried an interface until beam-facade ticket 40, justified by a package that no
+longer exists and never rebound by any host. A host needing different policy binds a subclass
+against the class.
 
 ## Config
 

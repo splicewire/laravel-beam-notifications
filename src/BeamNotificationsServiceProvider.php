@@ -9,7 +9,6 @@ use Splicewire\Beam\Doctor\BeamDoctorManifest;
 use Splicewire\Beam\Events\BeamParticlePersisted;
 use Splicewire\Beam\Install\BeamInstallManifest;
 use Splicewire\Beam\Notifications\Contracts\RecipientResolver;
-use Splicewire\Beam\Notifications\Contracts\SchemaResolver;
 use Splicewire\Beam\Notifications\Doctor\BeamNotificationsMigrationsAudit;
 use Splicewire\Beam\Notifications\Listeners\NotifyOnSubmission;
 use Splicewire\Beam\Notifications\Recipients\DefaultRecipientResolver;
@@ -18,11 +17,15 @@ use Splicewire\Beam\Notifications\Support\RegistrySchemaResolver;
 /**
  * The notify-capability provider. "A beam can notify."
  *
- * packageRegistered(): merge config; bind the two seams to their built-in defaults —
+ * packageRegistered(): merge config; bind the ONE rebindable seam to its built-in default —
  *   - RecipientResolver -> DefaultRecipientResolver (address-only `to:`). beam-accounts'
  *     provider REBINDS this to its accounts-aware resolver when installed (soft dep, §2).
- *   - SchemaResolver   -> RegistrySchemaResolver (record-carried snapshot, then beam's schema
- *     registry by the record's binding). A host with a different registry rebinds it (§S).
+ *
+ * Schema resolution is NOT a second seam here (beam-facade ticket 40): {@see RegistrySchemaResolver}
+ * is a concrete class the listener depends on directly, autowired over beam-core's
+ * `SchemaTargetResolver` port. It had an interface, justified by a package that no longer exists,
+ * and no host in the estate ever rebound it. A host that needs different policy binds a subclass
+ * against the class.
  *
  * packageBooted(): listen on {@see BeamParticlePersisted} (the ONE post-persist signal every beam write
  * path emits — ADR-0150 / beam-write-pipeline ticket 05), gated by config; publish config.
@@ -72,7 +75,6 @@ class BeamNotificationsServiceProvider extends PackageServiceProvider
     public function packageRegistered(): void
     {
         $this->app->bind(RecipientResolver::class, DefaultRecipientResolver::class);
-        $this->app->bind(SchemaResolver::class, RegistrySchemaResolver::class);
     }
 
     public function packageBooted(): void
