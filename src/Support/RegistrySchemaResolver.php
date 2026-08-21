@@ -42,11 +42,20 @@ use Splicewire\Beam\Submissions\RecordsSubmissions;
  *
  * The repair is to ask the registry FIRST and consult a snapshot only for a record that carries no
  * `schema_ref` at all (a record with one is registry-addressable by construction, so its snapshot
- * is always the stale read). That is NOT applied here, and the reason is a hard prerequisite: the
- * four hosts stamping snapshots today (audiostud, fable, standwell, stephenrushing) load their form
- * schemas from `resources/schemas/forms/*.json` and have no registry artifacts, so inverting the
- * tiers alone would take every one of them dark — silently, since a registry miss is `[]`, not an
- * error. The inversion and those four host conversions have to land together; ticket 47 owns both.
+ * is always the stale read). That is NOT applied here — but the prerequisite that blocked it is now
+ * CLOSED. The four hosts stamping snapshots (audiostud, fable, standwell, stephenrushing) used to
+ * load their form schemas from `resources/schemas/forms/*.json` with no registry artifacts, so
+ * inverting the tiers alone would have taken every one of them dark — silently, since a registry
+ * miss is `[]`, not an error. Beam-facade ticket 48 dissolved that directory estate-wide: all four
+ * now register their schema as a committed artifact under an absolute `$id`, and each was verified
+ * to resolve through tier 2 live. **Ticket 47 is therefore the tier-order edit in {@see resolve()}
+ * and nothing else.**
+ *
+ * One thing 47 should re-run rather than trust, because it fails silently if it is ever untrue: a
+ * stored `schema_ref` is a VERSIONED `$id` while {@see SchemaTargetResolver::targetFor()} wants a
+ * STEM and appends the version itself. They reconcile only because
+ * {@see PersistsBeamParticle::recordType()} strips the trailing integer — and because `SchemaId`
+ * splits an absolute URI correctly despite the `https://` slashes.
  *
  * DELETE TIER 1 when no host writes `meta.schema` any more — a greppable condition, not an
  * intention. Ticket 41 converges the estate onto beam-core's generic intake door, after which every
