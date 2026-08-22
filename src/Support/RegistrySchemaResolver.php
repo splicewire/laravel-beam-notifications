@@ -26,13 +26,15 @@ use Splicewire\Beam\Submissions\RecordsSubmissions;
  *  1. REGISTRY — for any record carrying a `schema_ref`. Its TYPE (via
  *     {@see PersistsBeamParticle::recordType()}) resolves through the bound
  *     {@see SchemaTargetResolver}. A record with a `schema_ref` is registry-addressable BY
- *     CONSTRUCTION, so the registry is the only correct answer for it — a miss returns `[]` and
- *     does NOT fall through to a snapshot.
+ *     CONSTRUCTION, so the registry is the only correct answer for it — a miss does NOT fall through
+ *     to a snapshot. It THROWS {@see UnresolvableSchemaRef} (ticket 62): a miss on an addressable
+ *     record is a host misconfiguration, and returning `[]` for it made the only evidence an absence.
  *  2. SNAPSHOT — a schema document frozen onto the record itself (a `schema` attribute or
  *     `meta.schema`), consulted ONLY for a record carrying no `schema_ref` at all.
  *     {@see RecordsSubmissions} stamps this on every capture as write-time provenance.
  *
- * Returns `[]` when nothing resolves — the listener then does nothing (no `x-beam-notify`, no send).
+ * Returns `[]` only for a record with NOTHING to resolve — no `schema_ref` and no snapshot — and the
+ * listener then does nothing. An addressable record that misses throws instead; see tier 1 above.
  *
  * ---
  *
@@ -72,22 +74,42 @@ class RegistrySchemaResolver
     public function __construct(protected SchemaTargetResolver $targets) {}
 
     /**
-     * The schema document for the given record, or an empty array when none is resolvable.
+     * The schema document for the given record, or an empty array when the record has nothing to
+     * resolve from (no `schema_ref` and no snapshot).
      *
      * @param  object  $record  The beam particle (or host record) the submission references.
      * @return array<string, mixed>
+     *
+     * @throws UnresolvableSchemaRef when the record carries a `schema_ref` the registry cannot
+     *                               answer — a host misconfiguration, not a normal outcome.
      */
     public function resolve(object $record): array
     {
         // 1. REGISTRY — the only tier an addressable record may answer from. A miss is final:
         //    falling back to the snapshot here would restore the stale read (see the class docblock).
+        //    It is also a DEFECT rather than a normal outcome, so it throws (ticket 62) — the port
+        //    below is total by contract and cannot know that; only this adapter holds both halves of
+        //    the fact (the record carried a ref, AND the answer is now final).
         $ref = data_get($record, 'schema_ref');
         if (is_string($ref) && $ref !== '') {
             $type = method_exists($record, 'recordType')
                 ? $record->recordType()
                 : SchemaId::from($ref)->recordType();
 
-            return is_string($type) && $type !== '' ? $this->targets->targetFor($type) : [];
+            $id = data_get($record, 'id');
+            $id = is_scalar($id) ? (string) $id : null;
+
+            if (! is_string($type) || $type === '') {
+                throw UnresolvableSchemaRef::forUnstemmableRef($ref, $this->targets::class, $id);
+            }
+
+            $target = $this->targets->targetFor($type);
+
+            if ($target === []) {
+                throw UnresolvableSchemaRef::forStem($ref, $type, $this->targets::class, $id);
+            }
+
+            return $target;
         }
 
         // 2. SNAPSHOT — write-time provenance, reachable only for a record with no `schema_ref`.

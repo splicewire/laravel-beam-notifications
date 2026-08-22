@@ -20,9 +20,17 @@ use Splicewire\Beam\Notifications\Support\RegistrySchemaResolver;
  *
  * The record is already durable when this runs (the pipeline emits AFTER the save), so a
  * failing/misconfigured notifier must never turn a captured write into a 500 — it is reported and
- * swallowed. That is the request-side half of persist-then-notify. A genuine misconfiguration the
- * operator must see (roles/teams with no accounts resolver) still surfaces: UnresolvableRecipientKind is
- * reported here, and a boot-time guard elsewhere is the louder signal.
+ * swallowed. That is the request-side half of persist-then-notify, and it is why the try wraps the
+ * WHOLE body rather than the dispatch alone (beam-facade ticket 62). It used to cover only
+ * `dispatch()`, which left the guarantee true of the two lines someone thought of: this listener is
+ * registered with a plain synchronous `Event::listen`, fired from the write chain's terminal
+ * `EmitStage`, so anything thrown above the try propagated back through `ParticleWriter` to the
+ * controller — a 500 on a request whose record had already saved.
+ *
+ * A genuine misconfiguration the operator must see still surfaces, because swallowed here means
+ * `report()`ed, not discarded. Two throw from collaborators and are caught at this ONE boundary —
+ * `UnresolvableRecipientKind` (roles/teams with no accounts resolver) and `UnresolvableSchemaRef`
+ * (a `schema_ref` the registry cannot answer). A boot-time guard elsewhere is the louder signal.
  */
 class NotifyOnSubmission
 {
@@ -37,23 +45,23 @@ class NotifyOnSubmission
             return;
         }
 
-        $record = $event->record;
-
-        $schema = $this->schemaResolver->resolve($record);
-
-        $notify = $schema[Keywords::Notify] ?? null;
-
-        if (! is_array($notify) || $notify === []) {
-            return;
-        }
-
-        $context = [
-            'payload' => $event->payload,
-            'schema' => $schema,
-            'submission' => $this->submissionContext($record),
-        ];
-
         try {
+            $record = $event->record;
+
+            $schema = $this->schemaResolver->resolve($record);
+
+            $notify = $schema[Keywords::Notify] ?? null;
+
+            if (! is_array($notify) || $notify === []) {
+                return;
+            }
+
+            $context = [
+                'payload' => $event->payload,
+                'schema' => $schema,
+                'submission' => $this->submissionContext($record),
+            ];
+
             $this->dispatcher->dispatch(
                 $notify,
                 $context,

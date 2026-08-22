@@ -2,6 +2,7 @@
 
 use Splicewire\Beam\Models\BeamParticle;
 use Splicewire\Beam\Notifications\Support\RegistrySchemaResolver;
+use Splicewire\Beam\Notifications\Support\UnresolvableSchemaRef;
 use Splicewire\Beam\Schema\Contracts\SchemaTargetResolver;
 
 /**
@@ -27,15 +28,28 @@ it('reads the registry, not the snapshot, for a record carrying a schema_ref', f
         ->and($resolved['x-beam-notify']['to'])->toBe(['current@site.test']);
 });
 
-it('does NOT fall through to the snapshot when the registry misses an addressable record', function () {
+it('throws rather than falling through to the snapshot when the registry misses an addressable record', function () {
     registerSchemaTarget('something-else', ['title' => 'Not this one']);
 
-    $resolved = resolveSchemaFor(new BeamParticle([
+    // The fixture carries a stale `meta.schema` ON PURPOSE: a fall-through would resolve it and
+    // return the v1 recipients, which is the stale read ticket 40 diagnosed and 47 made unreachable.
+    // Throwing asserts that at least as strongly as the `[]` this used to expect — and, per ticket
+    // 62, asserts the other half too: the miss is a host misconfiguration, so the only evidence is
+    // no longer an absence.
+    expect(fn () => resolveSchemaFor(new BeamParticle([
         'schema_ref' => 'contact/1',
         'meta' => ['schema' => ['title' => 'Contact v1', 'x-beam-notify' => ['to' => ['stale@site.test']]]],
-    ]));
+    ])))->toThrow(UnresolvableSchemaRef::class);
+});
 
-    expect($resolved)->toBe([]);
+it('names the stem and the bound resolver in the miss, not the config key that was meant to produce them', function () {
+    registerSchemaTarget('something-else', ['title' => 'Not this one']);
+
+    // Ticket 53's rule, carried onto the runtime signal: a host that misses usually has an empty
+    // registry or a different resolver bound than it believes, and the ref alone cannot tell those
+    // apart.
+    expect(fn () => resolveSchemaFor(new BeamParticle(['schema_ref' => 'contact/1'])))
+        ->toThrow(UnresolvableSchemaRef::class, 'stem `contact`');
 });
 
 it('strips the version off a stored schema_ref before addressing the registry', function () {
@@ -67,6 +81,19 @@ it('reads the snapshot for a record carrying no schema_ref at all', function () 
 });
 
 it('resolves nothing for a record with neither a schema_ref nor a snapshot', function () {
+    expect(resolveSchemaFor(new BeamParticle(['payload' => ['name' => 'Ada']])))->toBe([]);
+});
+
+it('does NOT treat a record with no schema_ref as a miss', function () {
+    registerSchemaTarget('something-else', ['title' => 'Not this one']);
+
+    // Ticket 62's boundary, as a gate rather than a comment: the trigger is strictly
+    // ref-present-and-unanswerable. A record with no ref has nothing to be wrong about — it is
+    // tier 2's legitimate case today, and it stays `[]` — so a snapshot read must never raise. This
+    // goes red the day someone widens the throw over the tier-2 population ahead of ticket 41.
+    expect(resolveSchemaFor(new BeamParticle(['meta' => ['schema' => ['title' => 'Frozen']]])))
+        ->toBe(['title' => 'Frozen']);
+
     expect(resolveSchemaFor(new BeamParticle(['payload' => ['name' => 'Ada']])))->toBe([]);
 });
 
