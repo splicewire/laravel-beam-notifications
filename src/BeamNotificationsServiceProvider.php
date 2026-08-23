@@ -51,15 +51,18 @@ use Splicewire\Beam\Notifications\Support\RegistrySchemaResolver;
  *     writes a delivery row, and the attribute deliberately sits on a Data class in THIS package
  *     rather than on the beam-agnostic `rushing/*` model.
  *
- * MIGRATIONS: the `beam_notifications` outbox ships as a PUBLISH-ONLY spatie/laravel-package-tools
- * stub — the idiomatic pattern for a PackageServiceProvider (mirrors beam-core's own conversion).
- * `runsMigrations` stays FALSE (the package-tools default), so beam-notifications never loads this
- * at runtime; `vendor:publish --tag=beam-notifications-migrations` re-stamps + sequences a timestamped
- * copy into the HOST at install time. UBIQUITOUS table (central + every tenant — "everything is
- * shared by default"): publishes to the SINGLE `database/migrations/shared/` destination, not a
- * duplicated flat+tenant pair, registered via `->hasMigrations([...])` in
- * {@see self::configurePackage()}. beam-tenancy's `registerSharedMigrationsPath()` is what runs
- * `database/migrations/shared/` in both the central `migrate` pass and Stancl's tenant pass.
+ * MIGRATIONS: this package ships NONE, and that is the point (beam-facade ticket 77, ruled by 58).
+ * It once carried a `beam_notifications` outbox as a publish-only stub — DDL inherited from the
+ * dissolved submissions package and adopted here on 2026-08-03, five days AFTER the 2026-07-29 ruling
+ * (BWP-05) that deleted the outbox in favour of `rushing/laravel-notification-status`. Four estate-wide
+ * sweeps then made the corpse steadily more conformant, because no sweep predicate asks whether its
+ * subject should exist. Every published copy was empty at every host, and the last writer came down
+ * with tower's outbox stack (ticket 76), so the stub was deleted rather than maintained.
+ *
+ * Durability therefore lives entirely in the incumbent's `notification_statuses` table — which is why
+ * the install step below publishes the INCUMBENT's two tags alongside this package's own: a delegated
+ * substrate is nobody's artifact under the manifest's "a package registers its own" model, and the
+ * arm that made the delegation is the honest owner of getting it installed (58 Q7).
  */
 class BeamNotificationsServiceProvider extends PackageServiceProvider
 {
@@ -69,12 +72,14 @@ class BeamNotificationsServiceProvider extends PackageServiceProvider
             ->name('laravel-beam-notifications')
             // Nested config namespace (beam-write-pipeline ticket 07): config/beam/notifications.php,
             // read as config('beam.notifications.*') — the beam family reads as one.
-            ->hasConfigFile('beam/notifications')
-            // The notifications outbox ships as a PUBLISH-ONLY stub (see class docblock). UBIQUITOUS
-            // (central + every tenant), so it publishes to the single `shared/` destination.
-            ->hasMigrations([
-                'shared/create_beam_notifications_table',
-            ]);
+            ->hasConfigFile('beam/notifications');
+        // Config only. This package registers no migrations because it ships none (see class docblock):
+        // its durability substrate belongs to rushing/laravel-notification-status, and the install step
+        // in packageBooted() is what gets that substrate published.
+        //
+        // Do not restore the registration call here even in prose — StubMigrationsAudit's predicate for
+        // it is a plain str_contains over this file's source, so merely NAMING the method in a comment
+        // reads as a registration and flips the audit to its "ships stubs" branch.
     }
 
     public function packageRegistered(): void
@@ -87,10 +92,36 @@ class BeamNotificationsServiceProvider extends PackageServiceProvider
         // Self-register into beam-core's install manifest (ticket 08): splicewire:beam:install publishes this
         // package's config with the rest of the stack. beam-core never names this package — the
         // registration pushes DOWN into the manifest from here.
+        //
+        // THREE tags on ONE step (beam-facade 77, ruled by 58 Q7). One is this package's own; the other
+        // two belong to rushing/laravel-notification-status, the incumbent this arm delegated delivery
+        // durability to. Its recorder subscribes globally on boot with no `hasTable` guard, and nothing
+        // in the estate registered its tags, so its table landed only where someone published by hand —
+        // two hosts sent notifications straight into a missing table. The gap is structural, not
+        // sequential: the manifest's model is "a package registers its own artifacts", and a DELEGATED
+        // substrate is nobody's artifact.
+        //
+        // Deliberately NOT a second step named `rushing/laravel-notification-status`: that package has
+        // never heard of beam, and naming it here would invert the manifest's load-bearing direction
+        // (consumers register DOWN; beam-core never learns a consumer's name). One step, named for the
+        // package that made the delegation, says the true thing — installing the notify arm publishes
+        // the substrate it delegated to.
+        //
+        // Re-publishing at a host that already has `notification_statuses` is safe: that stub carries
+        // the convergent guard (ticket 28), so a second publish converges rather than collides.
         if ($this->app->bound(BeamInstallManifest::class)) {
             $this->app->make(BeamInstallManifest::class)->register(
                 package: 'splicewire/laravel-beam-notifications',
-                publishTags: ['beam-notifications-config', 'beam-notifications-migrations'],
+                publishTags: [
+                    // `beam-notifications-migrations` is deliberately absent: package-tools registers a
+                    // `<short-name>-migrations` tag only per entry in `->hasMigrations([...])`, so with no
+                    // migrations left the tag does not exist. Listing it would publish nothing — the same
+                    // dead-artifact rot this ticket deleted, in the manifest instead of on disk.
+                    'beam-notifications-config',
+                    'notification-status-config',
+                    'notification-status-migrations',
+                ],
+                note: 'also publishes rushing/laravel-notification-status — the delivery ledger this arm delegated durability to.',
             );
         }
 
