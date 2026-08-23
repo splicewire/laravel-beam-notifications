@@ -23,20 +23,6 @@ use Splicewire\Beam\Notifications\Tests\Fixtures\TeamMemberUser;
  * Every assertion here goes through a REQUEST rather than through the attribute — a declaration that
  * reflects correctly but never serves is what this ticket exists to avoid.
  */
-/**
- * beam-core's `ParticleOperationController::runTask()` calls the bare global `set_min_time_limit()`
- * on its SYNC branch, and that function is a HOST helper (`splicewire-app/app/helpers.php`) rather
- * than anything Laravel ships — so `?async=false` fatals at any beam host that has not defined it.
- * `splicewire/tower` already hit this and shipped its own guarded copy in `src/helpers.php`
- * ("tower called it as a bare global, coupling the engine to a host helper"); beam-core has not.
- *
- * Shimmed here so this test proves the OP's two modes rather than re-proving beam's gap; the gap
- * itself is carved out as beam-facade ticket 93, not fixed in passing.
- */
-if (! function_exists('set_min_time_limit')) {
-    function set_min_time_limit(int $seconds): void {}
-}
-
 beforeEach(function () {
     // Boot the incumbent (a hard require of this package, so a real host always has it) and stand up
     // its ledger table — the same setup AutoRecordStatusTest uses.
