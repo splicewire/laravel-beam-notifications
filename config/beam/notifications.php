@@ -27,4 +27,20 @@ return [
     */
     'default_channels' => ['mail'],
 
+    /*
+    | The delivery-ledger particle surface: a framed, read-only list of
+    | rushing/laravel-notification-status rows plus the `replay` operation
+    | (`POST {group_prefix}/notification-statuses/{id}/op/replay`). This package delegated
+    | durability to that ledger, so it owns the operator view of it (beam-facade 58 Q3/Q4).
+    |
+    | The op is deny-default: it authorizes `update` against the ledger row, so a host that
+    | registers no policy for the model gets a 403 until it does. `enabled => false` mounts
+    | nothing at all.
+    */
+    'resources' => [
+        'enabled' => true,
+        'group_prefix' => 'resources',
+        'middleware' => ['web', 'auth'],
+    ],
+
 ];

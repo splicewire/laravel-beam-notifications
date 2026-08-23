@@ -45,6 +45,11 @@ use Splicewire\Beam\Notifications\Support\RegistrySchemaResolver;
  *     (DESIGN §7 L4 decision): it subscribes to Laravel's native notification events globally, so
  *     the moment a BeamNotification is sent it is recorded automatically — no outbox, no coupling
  *     here. The dissolved submissions package's bespoke outbox is NOT folded in; it is deleted.
+ *     What this package DOES own is the operator VIEW of that ledger (ticket 75) — the framed
+ *     read-only `notification-statuses` particle resource and its `replay` op, registered by
+ *     {@see Resources::register()}. Owning the view is not owning the durability: nothing here
+ *     writes a delivery row, and the attribute deliberately sits on a Data class in THIS package
+ *     rather than on the beam-agnostic `rushing/*` model.
  *
  * MIGRATIONS: the `beam_notifications` outbox ships as a PUBLISH-ONLY spatie/laravel-package-tools
  * stub — the idiomatic pattern for a PackageServiceProvider (mirrors beam-core's own conversion).
@@ -98,6 +103,11 @@ class BeamNotificationsServiceProvider extends PackageServiceProvider
                 BeamNotificationsMigrationsAudit::class,
             );
         }
+
+        // The operator view of the ledger this package delegated durability to (ticket 75 / 58 Q3):
+        // a framed read-only `notification-statuses` resource + the `replay` op. Self-guarded on
+        // beam's particle infra and on `beam.notifications.resources.enabled`.
+        Resources::register();
 
         if (! config('beam.notifications.listen', true)) {
             return;
