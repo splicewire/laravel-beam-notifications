@@ -14,11 +14,23 @@ use Splicewire\Beam\Notifications\Recipients\Recipient;
  *    {@see DefaultRecipientResolver}, which handles
  *    `to:` (literal + payload-ref addresses) and NOTHING else — `to_roles`/`to_teams` throw
  *    a clear error there (no silent no-recipient send).
- *  - `splicewire/laravel-beam-accounts` (a SOFT dep) rebinds this contract to an
- *    accounts-aware resolver that additionally resolves `to_roles` -> role-member models and
- *    `to_teams` -> team-member models.
+ *  - an accounts-aware resolver rebinds this contract to additionally resolve
+ *    `to_roles` -> role-member models and `to_teams` -> team-member models.
  *
- * So `to:` always works standalone; `to_roles`/`to_teams` pull accounts.
+ * So `to:` always works standalone; `to_roles`/`to_teams` need an accounts-aware binding.
+ *
+ * ## ⚠️ THAT BINDING DOES NOT EXIST ANYWHERE IN THE FAMILY (measured 2026-08-24 / 2026-08-26)
+ *
+ * This docblock previously named `splicewire/laravel-beam-accounts` as the soft dep that supplies it,
+ * in the present tense. That package contains no implementation of this contract and no reference to
+ * `to_roles`/`to_teams` at all. The only non-default implementation in the estate is this package's
+ * own test fixture. Consequently `to_roles:` / `to_teams:` throws at every host, and the keyword is
+ * half-unresolvable rather than one composer require away.
+ *
+ * Which package should own the real one is beam-facade ticket 100 and is deliberately NOT settled
+ * here — this seam declares the keyword, which is an argument for an optional binding shipped beside
+ * it; putting it in beam-accounts is the other. The claim is removed rather than restated because a
+ * source-text check believes whatever a file says about itself (beam-facade ticket 77).
  */
 interface RecipientResolver
 {
