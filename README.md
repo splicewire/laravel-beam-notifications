@@ -14,8 +14,8 @@ package resolves recipients and sends a notification — with **no PHP** for the
 x-beam-notify:
   # recipients — declare any combination
   to:        ["ops@site.test", "{{ payload.email }}"]   # on-demand, mail-only
-  to_roles:  [admin]                                     # role members (models), full channels
-  to_teams:  ["{{ payload.team_id }}"]                   # team members (models), full channels
+  to_roles:  [admin]                                     # membership-role members (models), full channels
+  to_teams:  [acme-support]                              # team members by SLUG (models), full channels
 
   # channels — name strings; via() intersects them with the app's registered drivers
   channels:  [mail, database, central]
