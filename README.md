@@ -28,21 +28,42 @@ x-beam-notify:
   notification: App\Notifications\ContactReceived
 ```
 
-## The three recipient keys
+## Recipient kinds
 
-| key | resolves to | channels |
-|---|---|---|
-| `to:` | literal address(es) or a payload-ref (`{{ payload.email }}`) → on-demand mail | **mail-only** (no persistent Notifiable) |
-| `to_roles:` | role name(s) → member **models** | full channels **incl. the `database` inbox** |
-| `to_teams:` | team ref → team-member **models** | full channels **incl. the `database` inbox** |
+A key spelled `to` or `to_*` is a **recipient selector**. Each one is resolved by the *kind*
+registered for it in `config('beam.notifications.recipient_kinds')` — a map of keyword key →
+class-string. Everything else in the keyword (`channels`, `subject`, `template`, `notification`) is
+message configuration.
+
+| key | registered by | resolves to | channels |
+|---|---|---|---|
+| `to:` | this package | literal address(es) or a payload-ref (`{{ payload.email }}`) → on-demand mail | **mail-only** (no persistent Notifiable) |
+| `to_roles:` | `splicewire/laravel-beam-accounts` | membership role name(s) → member **models** | full channels **incl. the `database` inbox** |
+| `to_teams:` | `splicewire/laravel-beam-accounts` | team slug(s) → team-member **models** | full channels **incl. the `database` inbox** |
 
 The channel constraint is structural: the in-app inbox (`database` channel) requires a persistent
 `Notifiable`, so it is only reachable through `to_roles`/`to_teams`; `to:` is mail-only by
 construction.
 
-`to:` works standalone. `to_roles`/`to_teams` resolve through
-`splicewire/laravel-beam-accounts` (a **soft** dependency) — without it, using them is a clear
-hard error (never a silent no-recipient send).
+`to:` works standalone. `to_roles`/`to_teams` arrive with `splicewire/laravel-beam-accounts` (a
+**soft** dependency), which appends them to the same config key and binds the `AccountsDirectory`
+port they resolve through. Without that package they are simply unregistered — and an unregistered
+selector is a hard error, never a silent no-recipient send.
+
+**A host can add its own kind.** Implement `Contracts\RecipientKind`, register it under
+`beam.notifications.recipient_kinds.to_whatever`, and `to_whatever:` is authorable in a schema. No
+package involved has to probe whether another is installed: an unregistered kind is an absent
+config entry.
+
+### Two terminals, and no third silent one
+
+- A selector with **no registered kind** throws `UnresolvableRecipientKind` — a wiring fault.
+- A selector whose kind resolves to **nobody** throws `NoRecipientsForKind` — a content fault. A
+  notification with no recipient is a fault, not a no-op.
+
+⚠️ **Behaviour change:** that second rule now covers `to:` as well. An address that interpolates to
+nothing (`{{ payload.emial }}` — unknown paths render empty and never throw) used to be dropped, so
+a typo mailed nobody and reported nothing. It throws now. See `CHANGELOG.md`.
 
 ## The `central` channel (relay) is NOT here
 
@@ -76,11 +97,14 @@ submission}` context — **not Blade**, no code evaluation. The submission paylo
 input, so a Blade directive or `{{ ... }}` stored in it is inert text. Unknown paths render empty.
 A host that wants real templating uses the `notification:` override and owns its own view.
 
-## Seams you can rebind
+## Seams
 
-| binding | default | rebind to |
-|---|---|---|
-| `RecipientResolver` | address-only `to:` | beam-accounts' accounts-aware resolver (`to_roles`/`to_teams`) |
+The extension point is the **recipient-kind registry** above — you contribute a key, you do not
+replace a mechanism. There is no rebindable `RecipientResolver` port; it was removed by beam-facade
+100 after two years in which the accounts-aware rebinding it existed for was never written in either
+package, and half the keyword threw at every host while two docblocks said it was one composer
+require away. `DefaultRecipientResolver` is now a concrete dispatcher over registered kinds; a host
+that needs different dispatch *policy* binds a subclass against the class.
 
 Schema resolution is deliberately **not** a seam here. `RegistrySchemaResolver` is a concrete class
 the listener depends on directly: it reads a snapshot frozen on the record (`schema` /
@@ -91,4 +115,6 @@ against the class.
 
 ## Config
 
-`config/beam-notifications.php` — `listen` (master trigger switch) and `default_channels`.
+`config/beam/notifications.php`, read as `config('beam.notifications.*')` — `listen` (master
+trigger switch), `default_channels`, `recipient_kinds` (above) and `resources` (the delivery-ledger
+particle surface).

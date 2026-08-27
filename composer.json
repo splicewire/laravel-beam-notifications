@@ -24,6 +24,7 @@
         "illuminate/support": "^11.0|^12.0|^13.0",
         "rushing/laravel-data-filters": "*",
         "rushing/laravel-notification-status": "*",
+        "rushing/laravel-popcorn": "*",
         "schemastud/laravel-data-schemas": "*",
         "spatie/laravel-data": "^4.0|^5.0",
         "splicewire/laravel-beam": "*",
@@ -37,7 +38,7 @@
         "wikimedia/composer-merge-plugin": "^2.1"
     },
     "suggest": {
-        "splicewire/laravel-beam-accounts": "Resolves the to_roles / to_teams recipient keys (roles enum + team membership). Without it, only the address-only `to:` key works; to_roles/to_teams throw a clear boot/first-send error."
+        "splicewire/laravel-beam-accounts": "Registers the to_roles / to_teams recipient kinds into `beam.notifications.recipient_kinds`, and binds the AccountsDirectory port they resolve through. Without it those two keys are simply unregistered, and the address-only `to:` key is the whole selector vocabulary."
     },
     "autoload": {
         "psr-4": {
@@ -81,6 +82,10 @@
         {
             "type": "git",
             "url": "https://github.com/stephenr85/laravel-notification-status.git"
+        },
+        {
+            "type": "git",
+            "url": "https://github.com/stephenr85/laravel-popcorn.git"
         },
         {
             "type": "git",

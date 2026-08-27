@@ -28,6 +28,23 @@ return [
     'default_channels' => ['mail'],
 
     /*
+    | The recipient KINDS the `x-beam-notify` keyword can select with — the registry that
+    | replaced the rebindable RecipientResolver seam (beam-facade 100, built by 159).
+    |
+    | A key here is a keyword key verbatim; its value is a class-string implementing
+    | Contracts\RecipientKind. This package registers `to` (literal + payload-ref addresses,
+    | mail-only). splicewire/laravel-beam-accounts APPENDS `to_roles` / `to_teams` from its own
+    | provider when installed — so an unregistered kind is simply an absent entry here, and no
+    | package has to probe whether another is installed to decide whether a key resolves.
+    |
+    | A host may add its own kind. It is reached by any keyword key spelled `to` or `to_*`;
+    | `in_*` is reserved for the declared scope-modifier growth path, which contributes nobody.
+    */
+    'recipient_kinds' => [
+        'to' => Splicewire\Beam\Notifications\Recipients\Kinds\AddressRecipientKind::class,
+    ],
+
+    /*
     | The delivery-ledger particle surface: a framed, read-only list of
     | rushing/laravel-notification-status rows plus the `replay` operation
     | (`POST {group_prefix}/notification-statuses/{id}/op/replay`). This package delegated

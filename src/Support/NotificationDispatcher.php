@@ -5,16 +5,19 @@ namespace Splicewire\Beam\Notifications\Support;
 use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Notifications\Notification as LaravelNotification;
 use Illuminate\Support\Facades\Notification;
-use Splicewire\Beam\Notifications\Contracts\RecipientResolver;
 use Splicewire\Beam\Notifications\Keywords;
 use Splicewire\Beam\Notifications\Notifications\BeamNotification;
+use Splicewire\Beam\Notifications\Recipients\DefaultRecipientResolver;
 use Splicewire\Beam\Notifications\Recipients\Recipient;
 
 /**
  * Turns a resolved `x-beam-notify` keyword + its context into an actual send:
  *
- *  1. resolve recipients via the bound {@see RecipientResolver} (§2) — the built-in handles
- *     `to:`; beam-accounts' resolver adds `to_roles`/`to_teams`;
+ *  1. resolve recipients via {@see DefaultRecipientResolver} (§2), which dispatches each `to` / `to_*`
+ *     selector to the recipient KIND registered for it — this package registers `to`, beam-accounts
+ *     appends `to_roles` / `to_teams` (beam-facade 100/159). Depended on as a CLASS, not a port: the
+ *     rebindable-resolver seam is what 100 removed, and a host wanting different dispatch policy binds
+ *     a subclass against this class;
  *  2. build the message — the generic {@see BeamNotification} rendered from the keyword, OR
  *     the host FQCN named by `x-beam-notify.notification` (§1). The override REPLACES
  *     subject/template; beam still owns WHO (this resolution) and tracking (pkg 25);
@@ -28,7 +31,7 @@ use Splicewire\Beam\Notifications\Recipients\Recipient;
  */
 class NotificationDispatcher
 {
-    public function __construct(protected RecipientResolver $resolver) {}
+    public function __construct(protected DefaultRecipientResolver $resolver) {}
 
     /**
      * @param  array<string, mixed>  $notify  The parsed `x-beam-notify` keyword.

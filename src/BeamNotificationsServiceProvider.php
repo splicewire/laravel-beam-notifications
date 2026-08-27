@@ -3,23 +3,28 @@
 namespace Splicewire\Beam\Notifications;
 
 use Illuminate\Support\Facades\Event;
+use Rushing\Popcorn\Registries\RegistryIndex;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 use Splicewire\Beam\Doctor\BeamDoctorManifest;
 use Splicewire\Beam\Events\BeamParticlePersisted;
 use Splicewire\Beam\Install\BeamInstallManifest;
-use Splicewire\Beam\Notifications\Contracts\RecipientResolver;
 use Splicewire\Beam\Notifications\Doctor\BeamNotificationsMigrationsAudit;
 use Splicewire\Beam\Notifications\Listeners\NotifyOnSubmission;
-use Splicewire\Beam\Notifications\Recipients\DefaultRecipientResolver;
+use Splicewire\Beam\Notifications\Recipients\RecipientKindRegistry;
 use Splicewire\Beam\Notifications\Support\RegistrySchemaResolver;
 
 /**
  * The notify-capability provider. "A beam can notify."
  *
- * packageRegistered(): merge config; bind the ONE rebindable seam to its built-in default —
- *   - RecipientResolver -> DefaultRecipientResolver (address-only `to:`). beam-accounts'
- *     provider REBINDS this to its accounts-aware resolver when installed (soft dep, §2).
+ * packageRegistered(): merge config; bind the recipient-KIND registry.
+ *
+ * There is no rebindable resolver seam any more (beam-facade 100, built by 159). This provider used to
+ * bind `RecipientResolver -> DefaultRecipientResolver` and expect beam-accounts to REBIND it wholesale
+ * in order to add two keyword keys. Measured twice: nothing in the family ever did, so half the
+ * `x-beam-notify` keyword threw at every host while the docblocks said otherwise. The extension point
+ * is now {@see RecipientKindRegistry} — beam-accounts APPENDS `to_roles` / `to_teams` to
+ * `beam.notifications.recipient_kinds`, contributing one key each instead of replacing the mechanism.
  *
  * Schema resolution is NOT a second seam here (beam-facade ticket 40): {@see RegistrySchemaResolver}
  * is a concrete class the listener depends on directly, autowired over beam-core's
@@ -84,7 +89,10 @@ class BeamNotificationsServiceProvider extends PackageServiceProvider
 
     public function packageRegistered(): void
     {
-        $this->app->bind(RecipientResolver::class, DefaultRecipientResolver::class);
+        // A singleton, but NOT a snapshot: ConfigRegistry reads through to the config repository on
+        // every read, which is what lets beam-accounts append its kinds from a `packageBooted()` that
+        // runs after this one.
+        $this->app->singleton(RecipientKindRegistry::class);
     }
 
     public function packageBooted(): void
@@ -139,6 +147,16 @@ class BeamNotificationsServiceProvider extends PackageServiceProvider
         // a framed read-only `notification-statuses` resource + the `replay` op. Self-guarded on
         // beam's particle infra and on `beam.notifications.resources.enabled`.
         Resources::register();
+
+        // The one registry this package owns, described from the OWNER's own boot (a registry describes
+        // itself; nobody describes on another's behalf). Guarded because the index is popcorn's, and a
+        // host predating it still boots.
+        if ($this->app->bound(RegistryIndex::class)) {
+            $this->app->make(RegistryIndex::class)->describe(
+                $this->app->make(RecipientKindRegistry::class),
+                by: self::class,
+            );
+        }
 
         if (! config('beam.notifications.listen', true)) {
             return;
