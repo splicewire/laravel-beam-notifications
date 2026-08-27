@@ -5,7 +5,7 @@ namespace Splicewire\Beam\Notifications\Data;
 use Illuminate\Database\Eloquent\Model;
 use Rushing\NotificationStatus\Enums\NotificationDeliveryStatus;
 use Schemastud\DataSchemas\Attributes\Description;
-use Spatie\LaravelData\Data;
+use Splicewire\Beam\Data\Data;
 
 /**
  * What the `replay` operation answers with — the declared `output:` slot of

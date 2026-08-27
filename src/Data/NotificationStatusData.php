@@ -7,7 +7,7 @@ use Rushing\DataFilters\Attributes\Sortable;
 use Rushing\NotificationStatus\Enums\NotificationDeliveryStatus;
 use Rushing\NotificationStatus\Models\NotificationStatus;
 use Schemastud\DataSchemas\Attributes\Description;
-use Spatie\LaravelData\Data;
+use Splicewire\Beam\Data\Data;
 use Splicewire\Beam\Particle\Attributes\ParticleResource;
 
 /**
