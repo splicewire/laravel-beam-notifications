@@ -6,6 +6,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Orchestra\Testbench\TestCase as Orchestra;
 use Rushing\PermissionCascade\PermissionCascadeServiceProvider;
+use Rushing\Popcorn\Laravel\PopcornServiceProvider;
 use Rushing\Versioning\VersioningServiceProvider;
 use Schemastud\DataSchemas\LaravelDataSchemasServiceProvider;
 use Spatie\Activitylog\ActivitylogServiceProvider;
@@ -29,6 +30,12 @@ abstract class TestCase extends Orchestra
     protected function getPackageProviders($app): array
     {
         return [
+            // popcorn, FIRST — it binds the shared `RegistryIndex` singleton this package's provider
+            // describes RecipientKindRegistry into (beam-facade 159). Testbench does not auto-discover,
+            // and without it every `make(RegistryIndex::class)` builds a THROWAWAY, so the describe()
+            // lands on an index nothing can see and the suite stays green over nothing. Flagged by
+            // surgeon's provider-reachability audit the moment this package took the dependency.
+            PopcornServiceProvider::class,
             BeamServiceProvider::class,
             MediaLibraryServiceProvider::class,
             ActivitylogServiceProvider::class,
