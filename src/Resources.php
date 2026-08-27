@@ -3,6 +3,7 @@
 namespace Splicewire\Beam\Notifications;
 
 use Illuminate\Support\Facades\Route;
+use Splicewire\Beam\Facades\Particle;
 use Splicewire\Beam\Notifications\Data\NotificationStatusData;
 use Splicewire\Beam\Notifications\Ops\ReplayNotificationStatusOp;
 use Splicewire\Beam\Particle\Attributes\AttributedParticleDiscovery;
@@ -38,10 +39,10 @@ class Resources
         app(AttributedParticleDiscovery::class)->discover([NotificationStatusData::class]);
 
         Route::middleware($middleware)->prefix($groupPrefix)->group(function () {
-            Route::particleResource('notification-statuses', 'notification-statuses', ['only' => ['index', 'show']]);
+            Particle::mount('notification-statuses', 'notification-statuses')->only(['index', 'show']);
 
-            // `particleOps` both DISCOVERS (registers) the annotated op class and mounts it.
-            Route::particleOps('notification-statuses', 'notification-statuses', [ReplayNotificationStatusOp::class]);
+            // `Particle::ops()` both DISCOVERS (registers) the annotated op class and mounts it.
+            Particle::ops('notification-statuses', 'notification-statuses', [ReplayNotificationStatusOp::class]);
         });
     }
 }
