@@ -5,7 +5,7 @@ namespace Splicewire\Beam\Notifications\Data;
 use Illuminate\Database\Eloquent\Model;
 use Rushing\NotificationStatus\Enums\NotificationDeliveryStatus;
 use Schemastud\DataSchemas\Attributes\Description;
-use Splicewire\Beam\Data\Data;
+use Splicewire\Beam\Data\BeamData;
 
 /**
  * What the `replay` operation answers with — the declared `output:` slot of
@@ -17,7 +17,7 @@ use Splicewire\Beam\Data\Data;
  * the row's state as re-read after dispatch. On a queued run that state is the PRE-replay one (the
  * job has not run yet) — which is why `queued` ships beside it rather than being inferred from it.
  */
-class ReplayDispatchData extends Data
+class ReplayDispatchData extends BeamData
 {
     public function __construct(
         #[Description('True when the replay was queued; false when it ran inline (?async=false).')]

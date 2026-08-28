@@ -7,7 +7,7 @@ use Rushing\DataFilters\Attributes\Sortable;
 use Rushing\NotificationStatus\Enums\NotificationDeliveryStatus;
 use Rushing\NotificationStatus\Models\NotificationStatus;
 use Schemastud\DataSchemas\Attributes\Description;
-use Splicewire\Beam\Data\Data;
+use Splicewire\Beam\Data\BeamData;
 use Splicewire\Beam\Particle\Attributes\ParticleResource;
 
 /**
@@ -63,7 +63,7 @@ use Splicewire\Beam\Particle\Attributes\ParticleResource;
     readOnly: true,
     singularLabel: 'Delivery',
 )]
-class NotificationStatusData extends Data
+class NotificationStatusData extends BeamData
 {
     public function __construct(
         // The default sort rides `id` only as an attachment point — `#[Sortable]` targets a PROPERTY,
