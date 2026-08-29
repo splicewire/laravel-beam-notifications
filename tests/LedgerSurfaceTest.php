@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 use Rushing\NotificationStatus\Enums\NotificationDeliveryStatus;
 use Rushing\NotificationStatus\Jobs\ReplayNotificationStatus;
 use Rushing\NotificationStatus\Models\NotificationStatus;
+use Rushing\PermissionCascade\Facades\PermissionNamer;
 use Rushing\NotificationStatus\NotificationStatusServiceProvider;
 use Splicewire\Beam\Notifications\Resources;
 use Splicewire\Beam\Notifications\Tests\Fixtures\BrandedOverrideNotification;
@@ -87,10 +88,28 @@ function ledgerRow(array $attributes = []): NotificationStatus
     ]);
 }
 
-/** An operator whose host has granted the op's declared `update` ability. */
+/**
+ * An operator whose host has granted exactly the two abilities this surface needs: the class-level
+ * `view` token the ledger's read guard consults, and the `update` ability the replay op declares.
+ *
+ * ⚠️ **This was `Gate::before(fn () => true)` until registry-kernel 72, and that one line meant every
+ * read assertion in this file measured nothing.** With the gate forced open, `index` could not be
+ * observed returning the whole ledger to a caller holding nothing — which is exactly what it did, for
+ * as long as the resource had no `scope()`. `AGENTS.md` names this instrument by name: a security
+ * trace taken with the gate open measures nothing, and this file was its second instance in the estate.
+ *
+ * Granting two named abilities instead keeps every assertion below true for the reason it claims. The
+ * deny paths (an unauthorized replay; an unprivileged read) are covered in `LedgerReadGuardTest`, which
+ * opens no gate at all.
+ */
 function actAsPermittedOperator(): void
 {
-    Gate::before(fn () => true);
+    Gate::define(PermissionNamer::assemble(NotificationStatus::class, 'view'), fn () => true);
+    Gate::before(function ($user, string $ability) {
+        // The replay op's declared `update` ability, granted narrowly rather than universally.
+        return $ability === 'update' ? true : null;
+    });
+
     test()->actingAs(new AuthUser);
 }
 
@@ -253,14 +272,21 @@ it('accepts no input, and says so rather than ignoring a body', function () {
     Bus::assertNothingDispatched();
 });
 
-it('is deny-default: a host that granted nothing cannot replay', function () {
+it('is deny-default: a host that granted nothing cannot replay, and cannot see the row either', function () {
     $this->actingAs(new AuthUser);
     Bus::fake();
 
     $row = ledgerRow();
 
+    // ⚠️ **404, not 403, and the change is a STRENGTHENING rather than a loosening (registry-kernel 72).**
+    // This asserted `assertForbidden()` until the ledger grew a read guard. `scope()` is not only the
+    // index filter — it is also the SUBJECT-RESOLUTION gate for show/update/destroy, so a caller who
+    // has been granted nothing can no longer resolve the row at all and is refused before the op's
+    // `update` ability is ever consulted. The row's existence stops leaking on the way past.
+    //
+    // The test's claim is unchanged and still the point: granted nothing, the replay does not happen.
     $this->postJson("resources/notification-statuses/{$row->getKey()}/op/replay")
-        ->assertForbidden();
+        ->assertNotFound();
 
     Bus::assertNothingDispatched();
 });

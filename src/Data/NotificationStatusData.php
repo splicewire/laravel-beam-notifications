@@ -2,7 +2,11 @@
 
 namespace Splicewire\Beam\Notifications\Data;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
+use Rushing\PermissionCascade\Policies\BaseModelPolicy;
 use Rushing\DataFilters\Attributes\Sortable;
 use Rushing\NotificationStatus\Enums\NotificationDeliveryStatus;
 use Rushing\NotificationStatus\Models\NotificationStatus;
@@ -99,6 +103,47 @@ class NotificationStatusData extends BeamData
         #[Description('When the retry policy gave up on the row. Set means terminal — never replayed again.')]
         public ?string $givenUpAt,
     ) {}
+
+    /**
+     * The read guard for this resource's `index` (registry-kernel 72).
+     *
+     * ⚠️ **`filterable: false` means this closure is the ONLY thing standing between an authenticated
+     * caller and every row in the ledger.** {@see \Splicewire\Beam\Http\Particle\ParticleController}
+     * says so at its `index`: a non-filterable resource has no data-filters query to gate it, so
+     * "without [a scope] the list would return every row across all callers." Measured before this
+     * existed, gate CLOSED, with real `['auth']` middleware: `index` returned **200 and the entire
+     * ledger** to a user holding no ability, while `show` on those same rows returned **403**. That
+     * asymmetry was the tell — `show` fails closed on the missing policy, `index` failed open on it.
+     *
+     * The guard is COMPUTED from the cascade rather than hand-written, which is why this is four lines
+     * and not a bespoke owner filter. A delivery-ledger row has no steward: `notifiable_type`/
+     * `notifiable_id` name the RECIPIENT of a notification, not someone with authority over the record,
+     * and both are nullable. Filtering to "your own rows" would quietly turn an operator ledger
+     * (`group: 'Ops'`) into a personal one. What the cascade does on an ownerless, visibility-less model
+     * is exactly the operator semantics wanted — measured in `LedgerReadGuardTest`:
+     *
+     *     guest (null user)                    0 rows
+     *     authenticated, holding no token      0 rows
+     *     operator holding the class token     every row
+     *
+     * ⚠️ **Fail-CLOSED on a missing policy, and that is a deliberate divergence from the estate's other
+     * eleven copies of this idiom.** `CalendarData::scope()` and `RankTreeData::scope()` are
+     * byte-identical to each other and call `Gate::getPolicyFor($model)->scopeForUser(...)` with no null
+     * check, which fatals where no policy is bound. Neither posture is written down anywhere, which is
+     * registry-kernel 72's general half. Here the answer is not in doubt: a ledger that cannot resolve
+     * its own guard must show nothing.
+     */
+    public static function scope(Builder $query): Builder
+    {
+        $model = config('notification-status.models.notification_status', NotificationStatus::class);
+        $policy = Gate::getPolicyFor($model);
+
+        if (! $policy instanceof BaseModelPolicy) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $policy->scopeForUser($query, Auth::user());
+    }
 
     /**
      * Row → wire. Typed on `Model` rather than the concrete ledger class because the convention

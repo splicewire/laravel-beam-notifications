@@ -7,6 +7,9 @@ use Rushing\Popcorn\Registries\RegistryIndex;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 use Splicewire\Beam\Doctor\BeamDoctorManifest;
+use Illuminate\Support\Facades\Gate;
+use Rushing\NotificationStatus\Models\NotificationStatus;
+use Rushing\PermissionCascade\Policies\ConfiguredModelPolicy;
 use Splicewire\Beam\Events\BeamParticlePersisted;
 use Splicewire\Beam\Install\BeamInstallManifest;
 use Splicewire\Beam\Notifications\Doctor\BeamNotificationsMigrationsAudit;
@@ -160,6 +163,44 @@ class BeamNotificationsServiceProvider extends PackageServiceProvider
         //
         // The measured reason it cannot be defaulted: Laravel MERGES a nested group's middleware into
         // its parent's, so a package that names a stack appends to the host's rather than choosing.
+        // Bind the cascade policy onto the ledger model, so the resource's read guard has something to
+        // compute from (registry-kernel 72). Without this the `scope()` on NotificationStatusData
+        // fails closed and the ledger shows nothing — which is the correct failure, but not the useful one.
+        //
+        // ⚠️ **Bound directly rather than through `CascadePolicyRegistrar::register()`, and the reason is
+        // structural.** That helper reflects for `#[UseCascadePolicy]` and returns false when the model
+        // does not carry it — and the ledger model belongs to `rushing/laravel-notification-status`,
+        // which does not depend on permission-cascade and must not, since it is the durable recorder and
+        // has no business knowing about authorization. A package cannot annotate another package's
+        // model, so the surface OWNER binds the policy instead. This is the same split 58 Q3 drew:
+        // notification-status owns durability, beam-notifications owns the surface — and a read guard is
+        // part of a surface, not part of a ledger.
+        //
+        // Guarded on `class_exists` so a host without permission-cascade boots; the resource's own
+        // `scope()` then fails closed on the unbound policy, which is the posture we want in that case.
+        // Never overwrites: a host that has bound its own policy for the ledger keeps it.
+        // ⚠️ **Defaulted rather than read bare, and a test caught why.** In a HOST the incumbent's
+        // config is loaded before this boots, because notification-status is a hard require and Laravel
+        // discovers it. Under testbench it is not: the config key reads `null` here, `$ledgerModel` is
+        // falsy, and the binding silently does not happen — leaving the resource's `scope()` to fail
+        // closed on an unbound policy and return an EMPTY ledger, which is indistinguishable from the
+        // guard working. Three tests passed on that before the default was added. Same shape as the
+        // provider-list trap in AGENTS.md: testbench does not auto-discover, and the failure arrives as
+        // a plausible ANSWER rather than an error.
+        $ledgerModel = config('notification-status.models.notification_status', NotificationStatus::class);
+
+        if ($ledgerModel && class_exists(ConfiguredModelPolicy::class) && Gate::getPolicyFor($ledgerModel) === null) {
+            // Bound through a container key rather than by class name, because `ConfiguredModelPolicy`
+            // takes the model class as a constructor argument and so cannot be auto-resolved from a
+            // bare `Gate::policy($model, Policy::class)`. This mirrors `CascadePolicyRegistrar::register()`
+            // exactly, minus the `#[UseCascadePolicy]` reflection this model cannot carry.
+            $key = 'permission-cascade-policy:'.$ledgerModel;
+
+            $this->app->bind($key, fn () => new ConfiguredModelPolicy($ledgerModel));
+
+            Gate::policy($ledgerModel, $key);
+        }
+
         Resources::declare();
 
         // The one registry this package owns, described from the OWNER's own boot (a registry describes
