@@ -4,7 +4,6 @@ namespace Splicewire\Beam\Notifications;
 
 use Illuminate\Support\Facades\Route;
 use Splicewire\Beam\Facades\Particle;
-use Splicewire\Beam\Notifications\Data\NotificationStatusData;
 use Splicewire\Beam\Notifications\Ops\ReplayNotificationStatusOp;
 use Splicewire\Beam\Particle\Attributes\AttributedParticleDiscovery;
 use Splicewire\Beam\Particle\ParticleOperationRegistry;
@@ -36,7 +35,13 @@ class Resources
         $groupPrefix = $opts['group_prefix'] ?? config('beam.notifications.resources.group_prefix', 'resources');
         $middleware = $opts['middleware'] ?? config('beam.notifications.resources.middleware', ['web', 'auth']);
 
-        app(AttributedParticleDiscovery::class)->discover([NotificationStatusData::class]);
+        // This package's own declaration roots, scanned rather than named — `src/Data` holds the
+        // `#[ParticleResource]`, `src/Ops` the replay `#[ParticleOp]`. Idempotent by key, so the
+        // `Particle::ops()` call below still discovers-and-mounts exactly as it did.
+        app(AttributedParticleDiscovery::class)->discover(paths: [
+            __DIR__.'/Data',
+            __DIR__.'/Ops',
+        ]);
 
         Route::middleware($middleware)->prefix($groupPrefix)->group(function () {
             Particle::mount('notification-statuses', 'notification-statuses')->only(['index', 'show']);
