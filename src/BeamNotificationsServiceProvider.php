@@ -143,12 +143,24 @@ class BeamNotificationsServiceProvider extends PackageServiceProvider
             );
         }
 
-        // The operator view of the ledger this package delegated durability to (ticket 75 / 58 Q3):
-        // a framed read-only `notification-statuses` resource + the `replay` op. Self-guarded on beam's
-        // particle infra (`class_exists`) and nothing else — the `beam.notifications.resources.enabled`
-        // key this comment used to name was deleted by registry-kernel 70: installing the package is
-        // the opt-in, and no host had ever set the key because the surface was gated shut from birth.
-        Resources::register();
+        // DECLARE the operator view of the ledger this package delegated durability to (ticket 75 /
+        // 58 Q3): a read-only `notification-statuses` resource + the `replay` op. Registration only —
+        // never mounting. Self-guarded on beam's particle infra (`class_exists`) and nothing else; the
+        // `beam.notifications.resources.enabled` key this comment used to name was deleted by
+        // registry-kernel 70, because no host had ever set it and the surface was gated shut from birth.
+        //
+        // ⚠️ **This called `Resources::register()` until registry-kernel 71, and a provider is the one
+        // place it must never be called from.** A provider boots OUTSIDE every route group, so the
+        // mount had no ambient middleware to inherit and the package supplied `['web','auth']` to fill
+        // the gap — which is a guess about the host, and the wrong one at an API-only or tenant host.
+        // Mounting is now the host's act, made from the route file whose group it wants:
+        //
+        //     // routes/tenant.php, inside the group you want it under
+        //     \Splicewire\Beam\Notifications\Resources::register();
+        //
+        // The measured reason it cannot be defaulted: Laravel MERGES a nested group's middleware into
+        // its parent's, so a package that names a stack appends to the host's rather than choosing.
+        Resources::declare();
 
         // The one registry this package owns, described from the OWNER's own boot (a registry describes
         // itself; nobody describes on another's behalf). Guarded because the index is popcorn's, and a

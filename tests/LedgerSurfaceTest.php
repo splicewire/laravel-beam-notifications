@@ -11,6 +11,7 @@ use Rushing\NotificationStatus\Enums\NotificationDeliveryStatus;
 use Rushing\NotificationStatus\Jobs\ReplayNotificationStatus;
 use Rushing\NotificationStatus\Models\NotificationStatus;
 use Rushing\NotificationStatus\NotificationStatusServiceProvider;
+use Splicewire\Beam\Notifications\Resources;
 use Splicewire\Beam\Notifications\Tests\Fixtures\BrandedOverrideNotification;
 use Splicewire\Beam\Notifications\Tests\Fixtures\TeamMemberUser;
 
@@ -52,8 +53,19 @@ beforeEach(function () {
         $table->string('email');
     });
 
-    // The surface under test is the RESOURCE and its op; the mount's `['web', 'auth']` group is the
-    // host's business and running through the session/CSRF stack would only test testbench's wiring.
+    // MOUNT the surface the way a host does, which is the only way it mounts at all since
+    // registry-kernel 71: the provider DECLARES and never mounts, because a provider boots outside
+    // every route group and would have to invent a middleware stack to fill the gap. Standing in for
+    // the host here is the point — the test now exercises the documented call rather than a side
+    // effect of booting, and it is what would have caught the six days this surface was registered
+    // nowhere (registry-kernel 70).
+    //
+    // `group_prefix` is passed explicitly because the package no longer defaults one; every URL below
+    // is unchanged.
+    Resources::register(['group_prefix' => 'resources']);
+
+    // The surface under test is the RESOURCE and its op; the group a host mounts it under is the
+    // host's business, and running through the session/CSRF stack would only test testbench's wiring.
     // Authorization is still exercised — it rides the op's declared `ability`, not the route group,
     // and the deny path has its own test below.
     test()->withoutMiddleware();
