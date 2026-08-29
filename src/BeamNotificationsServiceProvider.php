@@ -144,8 +144,10 @@ class BeamNotificationsServiceProvider extends PackageServiceProvider
         }
 
         // The operator view of the ledger this package delegated durability to (ticket 75 / 58 Q3):
-        // a framed read-only `notification-statuses` resource + the `replay` op. Self-guarded on
-        // beam's particle infra and on `beam.notifications.resources.enabled`.
+        // a framed read-only `notification-statuses` resource + the `replay` op. Self-guarded on beam's
+        // particle infra (`class_exists`) and nothing else — the `beam.notifications.resources.enabled`
+        // key this comment used to name was deleted by registry-kernel 70: installing the package is
+        // the opt-in, and no host had ever set the key because the surface was gated shut from birth.
         Resources::register();
 
         // The one registry this package owns, described from the OWNER's own boot (a registry describes

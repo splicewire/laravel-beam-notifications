@@ -13,9 +13,21 @@ use Splicewire\Beam\Particle\ParticleOperationRegistry;
  * of `rushing/laravel-notification-status`, which this package delegated durability to and therefore
  * owns the surface of (58 Q3).
  *
- * Guarded on beam's particle infra exactly as `laravel-beam-rank`'s `Resources` is, so the package
- * boots (and its standalone suite runs) in a context without the route macros: registration and
- * mounting are one act here, and neither happens where there is nothing to mount into.
+ * Guarded on beam's particle infra — `class_exists()` and nothing more — so the package boots (and its
+ * standalone suite runs) where beam is genuinely absent. Registration and mounting are ONE act here,
+ * which is why the guard matters more than it does in `laravel-beam-calendars` (whose `declare()`
+ * survives its guard independently).
+ *
+ * ⚠️ **This guard also tested `Route::hasMacro('particleResource')` until registry-kernel ticket 70.**
+ * api-surface-coherence 93 deleted that macro on 2026-08-27 — in the very commit that converted the
+ * mount calls below (`ea8b094`, three lines apart, same hunk) — so for six days the guard was an
+ * unconditional early return and this package's resource was registered at **zero** of its twelve
+ * installers. Measured at eight bootable hosts: `routes=0, registered=false` everywhere. The macro
+ * bodies now live in `ParticleMounter` behind an injected `Router`, so no router probe is meaningful.
+ *
+ * There is no `enabled` config. It was `beam.notifications.resources.enabled`, defaulting true, and no
+ * host ever set it — because the surface was gated shut from birth, so nothing could have opted out of
+ * it. Installing the package is the opt-in (registry-kernel 70 Q2).
  *
  * `index` + `show` only. The ledger is `readOnly` — the one write it accepts is the replay op, which
  * mounts alongside at `POST {prefix}/notification-statuses/{id}/op/replay`.
@@ -24,16 +36,15 @@ class Resources
 {
     public static function register(array $opts = []): void
     {
-        if (! class_exists(ParticleOperationRegistry::class) || ! Route::hasMacro('particleResource')) {
-            return; // beam particle infra absent (e.g. a standalone package test env) — nothing to mount.
-        }
-
-        if (! ($opts['enabled'] ?? config('beam.notifications.resources.enabled', true))) {
-            return;
+        if (! class_exists(ParticleOperationRegistry::class)) {
+            return; // beam particle infra genuinely absent (a headless install) — nothing to mount into.
         }
 
         $groupPrefix = $opts['group_prefix'] ?? config('beam.notifications.resources.group_prefix', 'resources');
         $middleware = $opts['middleware'] ?? config('beam.notifications.resources.middleware', ['web', 'auth']);
+        // A fact about the delegated model, not about the host: `rushing/laravel-notification-status`'
+        // `NotificationStatus` uses `HasUuids` and its migration declares `uuid('id')->primary()`.
+        $idConstraint = $opts['idConstraint'] ?? 'uuid';
 
         // This package's own declaration roots, scanned rather than named — `src/Data` holds the
         // `#[ParticleResource]`, `src/Ops` the replay `#[ParticleOp]`. Idempotent by key, so the
@@ -43,8 +54,10 @@ class Resources
             __DIR__.'/Ops',
         ]);
 
-        Route::middleware($middleware)->prefix($groupPrefix)->group(function () {
-            Particle::mount('notification-statuses', 'notification-statuses')->only(['index', 'show']);
+        Route::middleware($middleware)->prefix($groupPrefix)->group(function () use ($idConstraint) {
+            Particle::mount('notification-statuses', 'notification-statuses')
+                ->idConstraint($idConstraint)
+                ->only(['index', 'show']);
 
             // `Particle::ops()` both DISCOVERS (registers) the annotated op class and mounts it.
             Particle::ops('notification-statuses', 'notification-statuses', [ReplayNotificationStatusOp::class]);
