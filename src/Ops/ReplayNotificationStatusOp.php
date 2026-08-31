@@ -60,7 +60,6 @@ use Splicewire\Beam\Particle\OperationKind;
     resource: 'notification-statuses',
     name: 'replay',
     kind: OperationKind::Task,
-    model: NotificationStatus::class,
     ability: 'update',
     input: false,
     output: ReplayDispatchData::class,
