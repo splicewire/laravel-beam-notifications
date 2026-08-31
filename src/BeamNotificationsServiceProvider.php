@@ -3,13 +3,12 @@
 namespace Splicewire\Beam\Notifications;
 
 use Illuminate\Support\Facades\Event;
-use Rushing\Popcorn\Registries\RegistryIndex;
-use Spatie\LaravelPackageTools\Package;
-use Spatie\LaravelPackageTools\PackageServiceProvider;
-use Splicewire\Beam\Doctor\BeamDoctorManifest;
 use Illuminate\Support\Facades\Gate;
 use Rushing\NotificationStatus\Models\NotificationStatus;
 use Rushing\PermissionCascade\Policies\ConfiguredModelPolicy;
+use Spatie\LaravelPackageTools\Package;
+use Spatie\LaravelPackageTools\PackageServiceProvider;
+use Splicewire\Beam\Doctor\BeamDoctorManifest;
 use Splicewire\Beam\Events\BeamParticlePersisted;
 use Splicewire\Beam\Install\BeamInstallManifest;
 use Splicewire\Beam\Notifications\Doctor\BeamNotificationsMigrationsAudit;
@@ -202,16 +201,6 @@ class BeamNotificationsServiceProvider extends PackageServiceProvider
         }
 
         Resources::declare();
-
-        // The one registry this package owns, described from the OWNER's own boot (a registry describes
-        // itself; nobody describes on another's behalf). Guarded because the index is popcorn's, and a
-        // host predating it still boots.
-        if ($this->app->bound(RegistryIndex::class)) {
-            $this->app->make(RegistryIndex::class)->describe(
-                $this->app->make(RecipientKindRegistry::class),
-                by: self::class,
-            );
-        }
 
         if (! config('beam.notifications.listen', true)) {
             return;
