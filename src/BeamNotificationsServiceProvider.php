@@ -2,6 +2,7 @@
 
 namespace Splicewire\Beam\Notifications;
 
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Rushing\NotificationStatus\Models\NotificationStatus;
@@ -198,6 +199,22 @@ class BeamNotificationsServiceProvider extends PackageServiceProvider
             $this->app->bind($key, fn () => new ConfiguredModelPolicy($ledgerModel));
 
             Gate::policy($ledgerModel, $key);
+
+            // ⛔ The morph alias for the same model — ADR-0118, amended decision 5: "registration follows
+            // ownership", and the owner is whoever declares the POLICY, which is this package. That is the
+            // non-obvious half here: `rushing/laravel-notification-status` ships the model but binds no
+            // policy and deliberately does not depend on permission-cascade, so it cannot own this.
+            //
+            // Aliased INSIDE the same guard and against `$ledgerModel` rather than the imported FQCN,
+            // because a host may rebind `notification-status.models.notification_status` — the policy
+            // binding above already honours that, and an alias naming the hardcoded class would silently
+            // disagree with it on exactly the hosts that rebind.
+            //
+            // Additive, never `enforceMorphMap` (20+ class-string morphs elsewhere would orphan). Key is
+            // the snake_case SHORT NAME per the estate's 106 existing aliases. Measured safe: zero live
+            // polymorphic rows store this class or this key anywhere in 19 schemas, no subclass exists, and
+            // `notification_status` is free in the booted map.
+            Relation::morphMap(['notification_status' => $ledgerModel], true);
         }
 
         Resources::declare();
