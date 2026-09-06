@@ -45,19 +45,17 @@ return [
     ],
 
     /*
-    | The delivery-ledger particle surface: a framed, read-only list of
-    | rushing/laravel-notification-status rows plus the `replay` operation
-    | (`POST {group_prefix}/notification-statuses/{id}/op/replay`). This package delegated
-    | durability to that ledger, so it owns the operator view of it (beam-facade 58 Q3/Q4).
+    | The package declares the delivery-ledger resource and replay operation at boot.
+    | To expose them over HTTP, the host calls Resources::register() from its chosen
+    | route group. These empty defaults inherit that group's prefix and middleware;
+    | the host can override them through config or explicit register() options.
     |
-    | The op is deny-default: it authorizes `update` against the ledger row, so a host that
-    | registers no policy for the model gets a 403 until it does. `enabled => false` mounts
-    | nothing at all.
+    | Reads remain policy-scoped, and replay requires the declared `update` ability.
+    | Installing the package declares the surface; mounting it is a separate host act.
     */
     'resources' => [
-        'enabled' => true,
-        'group_prefix' => 'resources',
-        'middleware' => ['web', 'auth'],
+        'group_prefix' => '',
+        'middleware' => [],
     ],
 
 ];
