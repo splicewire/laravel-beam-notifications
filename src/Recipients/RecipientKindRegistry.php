@@ -6,7 +6,6 @@ use Rushing\Popcorn\Laravel\Registries\ConfigRegistry;
 use Rushing\Popcorn\Registries\IsRegistry;
 use Rushing\Popcorn\Registries\OnDuplicate;
 use Rushing\Popcorn\Registries\Optionality;
-use Rushing\Popcorn\Registries\RegistryArity;
 use Splicewire\Beam\Notifications\Contracts\RecipientKind;
 
 /**
@@ -30,7 +29,7 @@ use Splicewire\Beam\Notifications\Contracts\RecipientKind;
  * construction, which is load-bearing here: beam-accounts registers in `packageBooted()`, after this
  * package's own provider has already run.
  *
- * ## `PickOne`, and entries are class-strings
+ * ## Keyed lookup of class-strings
  *
  * One key resolves to one kind. The entries stay class-strings resolved through the container by
  * {@see DefaultRecipientResolver} — the config array is the storage, so the registry hands back what
@@ -39,13 +38,10 @@ use Splicewire\Beam\Notifications\Contracts\RecipientKind;
  */
 #[IsRegistry(
     root: 'beam.notifications.recipient_kinds',
-    of: 'x-beam-notify recipient selector kinds — the `to` / `to_*` keys and the class that resolves each',
-    arity: RegistryArity::PickOne,
     entryType: 'class-string<'.RecipientKind::class.'>',
     onDuplicate: OnDuplicate::Supersede,
     optionality: Optionality::Optional,
-    note: 'Keys are the keyword key verbatim (`to`, `to_roles`, `to_teams`). A registry MISS is the '
-        .'unresolvable-kind condition, which is why no participant needs a class_exists guard.',
+    description: 'x-beam-notify recipient selector kinds — the `to` / `to_*` keys and the class that resolves each. Keys are the keyword key verbatim (`to`, `to_roles`, `to_teams`). A registry MISS is the unresolvable-kind condition, which is why no participant needs a class_exists guard.',
 )]
 class RecipientKindRegistry extends ConfigRegistry
 {
