@@ -4,8 +4,8 @@ namespace Splicewire\Beam\Notifications\Recipients;
 
 use Rushing\Popcorn\Laravel\Registries\ConfigRegistry;
 use Rushing\Popcorn\Registries\IsRegistry;
-use Rushing\Popcorn\Registries\OnDuplicate;
-use Rushing\Popcorn\Registries\Optionality;
+use Rushing\Popcorn\Registries\OnKeyDuplicate;
+use Rushing\Popcorn\Registries\PopulationRequirement;
 use Splicewire\Beam\Notifications\Contracts\RecipientKind;
 
 /**
@@ -39,8 +39,8 @@ use Splicewire\Beam\Notifications\Contracts\RecipientKind;
 #[IsRegistry(
     root: 'beam.notifications.recipient_kinds',
     entryType: 'class-string<'.RecipientKind::class.'>',
-    onDuplicate: OnDuplicate::Supersede,
-    optionality: Optionality::Optional,
+    onKeyDuplicate: OnKeyDuplicate::Supersede,
+    populationRequirement: PopulationRequirement::Optional,
     description: 'x-beam-notify recipient selector kinds — the `to` / `to_*` keys and the class that resolves each. Keys are the keyword key verbatim (`to`, `to_roles`, `to_teams`). A registry MISS is the unresolvable-kind condition, which is why no participant needs a class_exists guard.',
 )]
 class RecipientKindRegistry extends ConfigRegistry
