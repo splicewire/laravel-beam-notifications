@@ -157,7 +157,7 @@ it('queues the incumbent replay job by default and answers with the declared out
 
     $row = ledgerRow();
 
-    $this->postJson("resources/notification-statuses/{$row->getKey()}/op/replay")
+    $this->postJson("resources/notification-statuses/{$row->getKey()}/replay")
         ->assertOk()
         ->assertJsonPath('data.queued', true)
         ->assertJsonPath('data.id', (string) $row->getKey())
@@ -188,7 +188,7 @@ it('runs the replay inline on ?async=false, so the recorder re-arms the same row
         'last_error' => 'Connection refused',
     ])->save();
 
-    $this->postJson("resources/notification-statuses/{$row->getKey()}/op/replay?async=false")
+    $this->postJson("resources/notification-statuses/{$row->getKey()}/replay?async=false")
         ->assertOk()
         ->assertJsonPath('data.queued', false);
 
@@ -212,7 +212,7 @@ it('refuses a given_up row, matching the ledger write-once rule', function () {
         'given_up_at' => now(),
     ]);
 
-    $this->postJson("resources/notification-statuses/{$row->getKey()}/op/replay")
+    $this->postJson("resources/notification-statuses/{$row->getKey()}/replay")
         ->assertStatus(422)
         ->assertJsonValidationErrors('status');
 
@@ -225,7 +225,7 @@ it('refuses a sent row on the same terminal predicate', function () {
 
     $row = ledgerRow(['status' => NotificationDeliveryStatus::Sent, 'sent_at' => now()]);
 
-    $this->postJson("resources/notification-statuses/{$row->getKey()}/op/replay")
+    $this->postJson("resources/notification-statuses/{$row->getKey()}/replay")
         ->assertStatus(422);
 
     Bus::assertNothingDispatched();
@@ -237,7 +237,7 @@ it('refuses a row that stored no serialized instance', function () {
 
     $row = ledgerRow(['notification' => null]);
 
-    $this->postJson("resources/notification-statuses/{$row->getKey()}/op/replay")
+    $this->postJson("resources/notification-statuses/{$row->getKey()}/replay")
         ->assertStatus(422)
         ->assertJsonValidationErrors('replayable');
 
@@ -251,7 +251,7 @@ it('honours the retry policy the package\'s own two doors ask', function () {
     config()->set('notification-status.max_attempts', 3);
     $row = ledgerRow(['attempts' => 3]);
 
-    $this->postJson("resources/notification-statuses/{$row->getKey()}/op/replay")
+    $this->postJson("resources/notification-statuses/{$row->getKey()}/replay")
         ->assertStatus(422)
         ->assertJsonValidationErrors('status');
 
@@ -264,7 +264,7 @@ it('accepts no input, and says so rather than ignoring a body', function () {
 
     $row = ledgerRow();
 
-    $this->postJson("resources/notification-statuses/{$row->getKey()}/op/replay", ['status' => 'sent'])
+    $this->postJson("resources/notification-statuses/{$row->getKey()}/replay", ['status' => 'sent'])
         ->assertStatus(422);
 
     Bus::assertNothingDispatched();
@@ -283,7 +283,7 @@ it('is deny-default: a host that granted nothing cannot replay, and cannot see t
     // `update` ability is ever consulted. The row's existence stops leaking on the way past.
     //
     // The test's claim is unchanged and still the point: granted nothing, the replay does not happen.
-    $this->postJson("resources/notification-statuses/{$row->getKey()}/op/replay")
+    $this->postJson("resources/notification-statuses/{$row->getKey()}/replay")
         ->assertNotFound();
 
     Bus::assertNothingDispatched();
