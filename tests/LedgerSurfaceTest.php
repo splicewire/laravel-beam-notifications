@@ -126,8 +126,6 @@ it('serves the ledger as a read-only list, newest first, with the payload projec
     $rows = $response->json('data');
 
     expect($rows)->toHaveCount(2)
-        // #[Sortable(default: true)] on created_at desc is the whole ordering contract of a
-        // filterable:false index.
         ->and($rows[0]['id'])->toBe((string) $newer->getKey())
         ->and($rows[1]['id'])->toBe((string) $older->getKey())
         // The predicate, not the payload: a null `notification` IS the package's replayable:false.

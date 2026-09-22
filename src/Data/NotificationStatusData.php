@@ -40,14 +40,7 @@ use Splicewire\Beam\Particle\Attributes\ParticleResource;
  * through the package's own logs; a host that needs it on the wire widens this class deliberately
  * (04's "widening a surface is a decision").
  *
- * ## `filterable: false`, stated rather than defaulted
- * `filterable: true` requires a data-filters REGISTRATION, and a package-declared `#[ResourceFilter]`
- * only registers where the HOST has opted its discover paths in (beam-taxonomy's `tags` is the
- * estate's one instance) — a key registered in no tier makes `ResourceRegistry::get()` throw and the
- * index break on first request. So the list ships unfaceted and the default order is single-sourced
- * from `#[Sortable(default: true)]`, which the non-filterable index path reads identically. Trigger
- * for revisiting: an operator asks to filter by `status`/`channel`/`notificationType`, at which point
- * the resource gains a `ResourceQuery` and a registration in the same act.
+ * Filter controls derive from the declared vocabulary. Resource scopes apply to all reads.
  *
  * ## The model class is the OOTB one
  * `notification-status.models.notification_status` is swappable; `backing:` is a static class-string
@@ -63,7 +56,6 @@ use Splicewire\Beam\Particle\Attributes\ParticleResource;
     group: 'Ops',
     icon: 'send',
     section: 'ops',
-    filterable: false,
     readOnly: true,
     singularLabel: 'Delivery',
 )]
@@ -107,13 +99,7 @@ class NotificationStatusData extends BeamData
     /**
      * The read guard for this resource's `index` (registry-kernel 72).
      *
-     * ⚠️ **`filterable: false` means this closure is the ONLY thing standing between an authenticated
-     * caller and every row in the ledger.** {@see \Splicewire\Beam\Http\Particle\ParticleController}
-     * says so at its `index`: a non-filterable resource has no data-filters query to gate it, so
-     * "without [a scope] the list would return every row across all callers." Measured before this
-     * existed, gate CLOSED, with real `['auth']` middleware: `index` returned **200 and the entire
-     * ledger** to a user holding no ability, while `show` on those same rows returned **403**. That
-     * asymmetry was the tell — `show` fails closed on the missing policy, `index` failed open on it.
+
      *
      * The guard is COMPUTED from the cascade rather than hand-written, which is why this is four lines
      * and not a bespoke owner filter. A delivery-ledger row has no steward: `notifiable_type`/
