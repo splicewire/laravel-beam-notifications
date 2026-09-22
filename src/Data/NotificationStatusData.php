@@ -11,6 +11,7 @@ use Rushing\NotificationStatus\Enums\NotificationDeliveryStatus;
 use Rushing\NotificationStatus\Models\NotificationStatus;
 use Rushing\PermissionCascade\Policies\BaseModelPolicy;
 use Schemastud\DataSchemas\Attributes\Description;
+use Schemastud\Frame\Attributes\Column;
 use Splicewire\Beam\Data\BeamData;
 use Splicewire\Beam\Particle\Attributes\ParticleResource;
 
@@ -73,20 +74,25 @@ class NotificationStatusData extends BeamData
         #[Description("Laravel's per-send notification UUID — the correlation key a replay preserves.")]
         public string $notificationId,
         #[Description('FQCN of the notification class that was sent.')]
+        #[Column(label: 'Notification', sort: 0)]
         public string $notificationType,
         #[Description('The channel the delivery went out on, e.g. mail.')]
+        #[Column(label: 'Channel', sort: 1)]
         public string $channel,
         #[Description('Morph alias of the recipient. Null for an on-demand route with no model behind it.')]
         public ?string $notifiableType,
         #[Description('Key of the recipient record, as a string. Null for an on-demand route.')]
         public ?string $notifiableId,
         #[Description('Delivery state: pending, sent, failed or given_up.')]
+        #[Column(label: 'Status', sort: 2)]
         public string $status,
         #[Description('How many send attempts this row has recorded.')]
+        #[Column(label: 'Attempts', sort: 3)]
         public int $attempts,
         #[Description('Whether a serialized notification instance was stored, so the row can be replayed at all.')]
         public bool $replayable,
         #[Description('When the send entered the pipeline.')]
+        #[Column(label: 'Queued', sort: 4)]
         public ?string $queuedAt,
         #[Description('When the channel reported the delivery sent.')]
         public ?string $sentAt,
