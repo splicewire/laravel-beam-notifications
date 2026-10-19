@@ -47,5 +47,5 @@ it('inherits the host prefix and middleware when mounted inside its route group'
 it('declares useful columns for the read-only delivery list', function () {
     $manifest = app(Schemastud\Frame\Registry\ContextManifest::class)->forResource(Splicewire\Beam\Notifications\Data\NotificationStatusData::class);
     $columns = array_filter($manifest['byNode'], fn ($contexts) => $contexts['list-column']['participates'] ?? false);
-    expect(array_keys($columns))->toEqualCanonicalizing(['notificationType', 'channel', 'status', 'attempts', 'queuedAt']);
+    expect(array_keys($columns))->toEqualCanonicalizing(['label', 'channel', 'status', 'attempts', 'queuedAt']);
 });

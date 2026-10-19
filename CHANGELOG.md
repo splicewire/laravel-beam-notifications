@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+### The Deliveries list names each row in words: `NotificationStatusData::$label`
+
+The ledger's "Notification" column showed `notificationType`, a class name such as
+`Splicewire\Beam\Notifications\Notifications\BeamNotification` (owner re-walk WS-08). Each row now
+carries a `label`, and the column reads it. A generic form notification is named by the subject its
+`x-beam-notify` declared, rendered as the recipient read it ("New access request"); without a subject,
+by the form's title ("New submission: Request access"). Any other notification gets its short name in
+words (`ResetPassword` reads "Reset password"). The stored instance is read with
+`allowed_classes => false`, so naming a row wakes nothing it stored. `notificationType` stays on the
+wire, but it is no longer a list column.
+
 ### ⚠️ Behaviour change — a `to:` address that resolves to nothing now throws
 
 `DefaultRecipientResolver` used to drop an address that came back empty (`$address !== ''`).

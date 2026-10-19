@@ -13,6 +13,7 @@ use Rushing\PermissionCascade\Policies\BaseModelPolicy;
 use Schemastud\DataSchemas\Attributes\Description;
 use Schemastud\Frame\Attributes\Column;
 use Splicewire\Beam\Data\BeamData;
+use Splicewire\Beam\Notifications\Support\DeliveryLabel;
 use Splicewire\Beam\Particle\Attributes\ParticleResource;
 
 /**
@@ -37,9 +38,10 @@ use Splicewire\Beam\Particle\Attributes\ParticleResource;
  * `notification` is a serialized notification instance and `last_error` runs to 1000 chars; neither
  * belongs on a list projection. The serialized blob is projected as its PREDICATE instead —
  * `replayable`, which is exactly the package's own `notification !== null` signal — so an operator can
- * see whether a row CAN be replayed without the payload travelling. The error text stays readable
- * through the package's own logs; a host that needs it on the wire widens this class deliberately
- * (04's "widening a surface is a decision").
+ * see whether a row CAN be replayed without the payload travelling. It also yields the row's `label`
+ * ({@see DeliveryLabel}, read without waking the instance), so the list names a delivery in words rather
+ * than by its class. The error text stays readable through the package's own logs; a host that needs it
+ * on the wire widens this class deliberately (04's "widening a surface is a decision").
  *
  * Filter controls derive from the declared vocabulary. Resource scopes apply to all reads.
  *
@@ -73,8 +75,12 @@ class NotificationStatusData extends BeamData
         public string $id,
         #[Description("Laravel's per-send notification UUID — the correlation key a replay preserves.")]
         public string $notificationId,
-        #[Description('FQCN of the notification class that was sent.')]
+        // The list's name for the row (owner re-walk WS-08). It used to be `notificationType`, so an
+        // operator read a PHP class name; the class stays on the wire for tooling, off the list.
+        #[Description('What was sent, in words: the subject a form notification declared, else the notification\'s name. Never a class name.')]
         #[Column(label: 'Notification', sort: 0)]
+        public string $label,
+        #[Description('FQCN of the notification class that was sent.')]
         public string $notificationType,
         #[Description('The channel the delivery went out on, e.g. mail.')]
         #[Column(label: 'Channel', sort: 1)]
@@ -147,6 +153,9 @@ class NotificationStatusData extends BeamData
         return new self(
             id: (string) $row->getKey(),
             notificationId: (string) $row->notification_id,
+            // Words, never the class: see DeliveryLabel. The stored instance is read inertly, and only
+            // the label leaves this method.
+            label: DeliveryLabel::for((string) $row->notification_type, $row->notification),
             notificationType: (string) $row->notification_type,
             channel: (string) $row->channel,
             notifiableType: $row->notifiable_type,
