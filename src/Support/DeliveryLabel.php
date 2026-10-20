@@ -22,7 +22,11 @@ use Throwable;
  *
  * The stored instance is read INERTLY: unserialized with `allowed_classes => false`, so no class is
  * instantiated, no model is restored (no query per row), and no magic method runs on ledger content.
- * The serialized blob still never travels; only these words do.
+ *
+ * The serialized blob never travels, but these words can carry what the declared subject interpolates: a
+ * subject of `New access request from {{ payload.name }}` renders over the stored context, so that lead's
+ * name is on the list for everyone who may read the ledger, exactly as it was in the mail's subject line.
+ * A subject that must stay off the list should not interpolate the payload.
  */
 final class DeliveryLabel
 {

@@ -38,10 +38,11 @@ use Splicewire\Beam\Particle\Attributes\ParticleResource;
  * `notification` is a serialized notification instance and `last_error` runs to 1000 chars; neither
  * belongs on a list projection. The serialized blob is projected as its PREDICATE instead —
  * `replayable`, which is exactly the package's own `notification !== null` signal — so an operator can
- * see whether a row CAN be replayed without the payload travelling. It also yields the row's `label`
- * ({@see DeliveryLabel}, read without waking the instance), so the list names a delivery in words rather
- * than by its class. The error text stays readable through the package's own logs; a host that needs it
- * on the wire widens this class deliberately (04's "widening a surface is a decision").
+ * see whether a row CAN be replayed without the serialized payload travelling. It also yields the row's
+ * `label` ({@see DeliveryLabel}, read without waking the instance), so the list names a delivery in words
+ * rather than by its class; a declared subject that interpolates the payload puts that data in the label.
+ * The error text stays readable through the package's own logs; a host that needs it on the wire widens
+ * this class deliberately (04's "widening a surface is a decision").
  *
  * Filter controls derive from the declared vocabulary. Resource scopes apply to all reads.
  *

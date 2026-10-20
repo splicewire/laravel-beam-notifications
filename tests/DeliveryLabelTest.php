@@ -12,6 +12,8 @@ use Rushing\PermissionCascade\Facades\PermissionNamer;
 use Splicewire\Beam\Notifications\Notifications\BeamNotification;
 use Splicewire\Beam\Notifications\Resources;
 use Splicewire\Beam\Notifications\Tests\Fixtures\BrandedOverrideNotification;
+use Splicewire\Beam\Notifications\Tests\Fixtures\Tripwire;
+use Splicewire\Beam\Notifications\Tests\Fixtures\UnserializeTripwire;
 use Splicewire\Beam\Notifications\Tests\Fixtures\WakeupTripwire;
 
 /**
@@ -48,7 +50,7 @@ beforeEach(function () {
     Gate::define(PermissionNamer::assemble(NotificationStatus::class, 'view'), fn () => true);
     test()->actingAs(new AuthUser);
 
-    WakeupTripwire::$woken = false;
+    Tripwire::$fired = [];
 });
 
 function labelledDelivery(string $type, ?string $serialized): NotificationStatus
@@ -130,22 +132,49 @@ it('cuts a long declared subject rather than stretching the list', function () {
         ->and($label)->toEndWith('…');
 });
 
-it('reads the stored instance without waking anything it carries', function () {
+it('reads the stored instance without waking, unserializing or destructing anything it carries', function () {
     $stored = new BeamNotification(['mail'], 'Hello {{ payload.name }}', null, [
-        'payload' => ['name' => 'Ada', 'tripwire' => new WakeupTripwire],
+        'payload' => ['name' => 'Ada', 'woken' => new WakeupTripwire, 'unserialized' => new UnserializeTripwire],
     ]);
 
     $blob = serialize($stored);
+    unset($stored);
 
-    // Control: an ordinary unserialize of the same blob DOES wake it, so the last assertion can fail.
+    // Control: an ordinary unserialize of the same blob runs every one of them, so the assertions below can fail.
+    Tripwire::$fired = [];
     unserialize($blob);
-    expect(WakeupTripwire::$woken)->toBeTrue();
-    WakeupTripwire::$woken = false;
+    expect(Tripwire::$fired)->toContain(
+        WakeupTripwire::class.'::__wakeup',
+        UnserializeTripwire::class.'::__unserialize',
+        WakeupTripwire::class.'::__destruct',
+        UnserializeTripwire::class.'::__destruct',
+    );
 
+    Tripwire::$fired = [];
     labelledDelivery(BeamNotification::class, $blob);
 
     expect(servedDeliveryLabels())->toBe(['Hello Ada'])
-        ->and(WakeupTripwire::$woken)->toBeFalse();
+        ->and(Tripwire::$fired)->toBe([]);
+});
+
+it('reads the stored fields without reviving the notification class itself', function () {
+    // BeamNotification declares `context` as an array, and this blob holds a string there. Revived, the class refuses
+    // it. Read as a bag of fields it is a subject with no context, so the label is the subject. Nothing can be planted in
+    // the production class to trip on its own revival, so the refusal is how a read with `allowed_classes =>
+    // [BeamNotification::class]`, the easy way to get typed fields, would show: that read falls back to the default.
+    $class = BeamNotification::class;
+    $blob = str_replace(
+        'O:8:"stdClass"',
+        sprintf('O:%d:"%s"', strlen($class), $class),
+        serialize((object) ['subject' => 'Hello there', 'context' => 'not an array']),
+    );
+
+    // Control: allowed, the class does refuse this blob.
+    expect(fn () => unserialize($blob, ['allowed_classes' => [$class]]))->toThrow(TypeError::class);
+
+    labelledDelivery($class, $blob);
+
+    expect(servedDeliveryLabels())->toBe(['Hello there']);
 });
 
 it('falls back to the default rather than failing on a blob that will not parse', function () {

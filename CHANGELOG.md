@@ -13,6 +13,12 @@ words (`ResetPassword` reads "Reset password"). The stored instance is read with
 `allowed_classes => false`, so naming a row wakes nothing it stored. `notificationType` stays on the
 wire, but it is no longer a list column.
 
+A declared subject is rendered over the context the notification was stored with, so a subject that
+interpolates the payload (`New access request from {{ payload.name }}`) puts that lead's name on the
+Deliveries list, in `label`, for everyone who may read the ledger. The serialized instance still never
+travels; the label carries only what the subject spells out. A subject that must stay off the list
+should not interpolate the payload.
+
 ### ⚠️ Behaviour change — a `to:` address that resolves to nothing now throws
 
 `DefaultRecipientResolver` used to drop an address that came back empty (`$address !== ''`).
