@@ -113,6 +113,27 @@ the listener depends on directly: it reads a snapshot frozen on the record (`sch
 longer exists and never rebound by any host. A host needing different policy binds a subclass
 against the class.
 
+## Registries
+
+This package declares one registry:
+
+- [`beam.notifications.recipient_kinds`](docs/registries/beam.notifications.recipient_kinds.mdx): the
+  recipient kinds behind each `to` / `to_*` selector, described above.
+
+It registers into four registries `splicewire/laravel-beam` owns:
+
+- [`beam.install.steps`](https://github.com/splicewire/laravel-beam/blob/main/docs/registries/beam.install.steps.mdx):
+  the install step that publishes this package's config and the `rushing/laravel-notification-status` config and
+  migrations.
+- [`beam.doctor.audits`](https://github.com/splicewire/laravel-beam/blob/main/docs/registries/beam.doctor.audits.mdx):
+  the audit of the package's own published migrations.
+- [`beam.particle.resources`](https://github.com/splicewire/laravel-beam/blob/main/docs/registries/beam.particle.resources.mdx):
+  the read-only `notification-statuses` resource over the delivery ledger.
+- [`beam.particle.operations`](https://github.com/splicewire/laravel-beam/blob/main/docs/registries/beam.particle.operations.mdx):
+  its `replay` operation.
+
+Both particles are declared at boot; the routes are mounted only when the host calls `Resources::register()`.
+
 ## Config
 
 `config/beam/notifications.php`, read as `config('beam.notifications.*')` — `listen` (master
