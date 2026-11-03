@@ -1,0 +1,94 @@
+---
+title: Notification recipient kinds
+segment: beam.notifications.recipient_kinds
+nav_order: 100
+excerpt: The to and to_* selectors a form's x-beam-notify keyword can use, and the class that resolves each.
+---
+
+# Notification recipient kinds
+
+`beam.notifications.recipient_kinds` maps each **recipient selector** of the `x-beam-notify` schema
+keyword, such as `to`, `to_roles` or `to_teams`, to the class that turns its values into actual
+recipients. When a form submission is created, every selector in the schema's keyword is resolved
+through the kind registered for it, and the notification goes to everyone they return.
+
+{/* registry-facts:start — generated from the #[IsRegistry] declaration by `splicewire:beam:docs:registries:scaffold`. Rerun the command; do not edit between these markers. */}
+
+- **Root:** `beam.notifications.recipient_kinds`
+- **Entries:** `class-string<Splicewire\Beam\Notifications\Contracts\RecipientKind>`
+- **Duplicate keys:** Supersede — a later registration under a taken key replaces the earlier entry, in its place
+- **Population:** Optional — an empty registry is normal
+- **Order:** `100` (display order, ascending)
+- **Declared by:** `Splicewire\Beam\Notifications\Recipients\RecipientKindRegistry`
+
+{/* registry-facts:end */}
+
+```yaml
+x-beam-notify:
+  to:       ["ops@site.test", "{{ payload.email }}"]
+  to_roles: [admin]
+  to_teams: [acme-support]
+  subject:  "New {{ schema.title }} submission"
+```
+
+## What ships, and who adds more
+
+- This package registers `to`: literal or interpolated email addresses, delivered by mail only.
+- `splicewire/laravel-beam-accounts` adds `to_roles` and `to_teams`, the members of a membership role
+  or of a team (by slug), who receive the notification on every configured channel.
+- A host adds its own in its published `config/beam/notifications.php`.
+
+Each kind owns exactly one key and knows nothing about the others, so neither package checks whether
+the other is installed.
+
+## Adding a kind
+
+Implement `RecipientKind` and register its class under a key that starts with `to_`:
+
+```php
+use Splicewire\Beam\Notifications\Contracts\RecipientKind;
+use Splicewire\Beam\Notifications\Recipients\Recipient;
+
+class OnCallRecipientKind implements RecipientKind
+{
+    public function resolve(array $selectors, array $context): array
+    {
+        return OnCall::forRotas($selectors)->map(fn ($user) => Recipient::notifiable($user))->all();
+    }
+}
+```
+
+```php
+// config/beam/notifications.php
+'recipient_kinds' => [
+    'to' => AddressRecipientKind::class,
+    'to_on_call' => OnCallRecipientKind::class,
+],
+```
+
+From a provider, set the one leaf key, `config()->set('beam.notifications.recipient_kinds.to_on_call',
+…)`, never the whole array, so other packages' kinds survive. Kinds are class names made through the
+container, so a kind can take constructor dependencies.
+
+Only `to` and keys beginning with `to_` are selectors. Every other key in the keyword (`channels`,
+`subject`, `template`, `notification`) is message configuration.
+
+## Two ways a selector can fail
+
+- A selector with **no registered kind** is a wiring fault and throws `UnresolvableRecipientKind`.
+- A kind that **resolves to nobody** is a content fault and throws `NoRecipientsForKind`. An address
+  that renders empty, for instance from a misspelt `{{ payload.emial }}`, counts as nobody. It is not
+  skipped.
+
+Both are reported and swallowed at the submission listener, because the submission is already saved
+by the time notifications run; neither turns into a server error for the person submitting the form.
+A selector whose value is empty declares nobody and is simply skipped.
+
+## Going deeper
+
+The source is
+[`RecipientKindRegistry`](https://github.com/splicewire/laravel-beam-notifications/blob/main/src/Recipients/RecipientKindRegistry.php),
+dispatched by
+[`DefaultRecipientResolver`](https://github.com/splicewire/laravel-beam-notifications/blob/main/src/Recipients/DefaultRecipientResolver.php).
+The [README](https://github.com/splicewire/laravel-beam-notifications#readme) covers the whole
+keyword.
