@@ -34,7 +34,7 @@ it('holds the registry as a singleton that still sees a LATE registration', func
     // ConfigRegistry reads through to the config repository rather than snapshotting at construction.
     $registry = app(RecipientKindRegistry::class);
 
-    config()->set('beam.notifications.recipient_kinds.to_roles', AddressRecipientKind::class);
+    config()->set('beam.notifications.recipient-kinds.to_roles', AddressRecipientKind::class);
 
     expect($registry->has('to_roles'))->toBeTrue()
         ->and(app(RecipientKindRegistry::class))->toBe($registry);

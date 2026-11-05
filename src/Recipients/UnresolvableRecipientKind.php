@@ -34,7 +34,7 @@ class UnresolvableRecipientKind extends RuntimeException
         return new self(sprintf(
             'The `%s` recipient key of x-beam-notify has no registered recipient kind. Registered: %s. '
                 .'Install splicewire/laravel-beam-accounts for `to_roles` / `to_teams`, register your own '
-                .'kind under `beam.notifications.recipient_kinds.%s`, or remove `%s` from the keyword.',
+                .'kind under `beam.notifications.recipient-kinds.%s`, or remove `%s` from the keyword.',
             $key,
             $registered === [] ? '(none)' : implode(', ', $registered),
             $key,

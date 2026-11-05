@@ -39,8 +39,12 @@ return [
     |
     | A host may add its own kind. It is reached by any keyword key spelled `to` or `to_*`;
     | `in_*` is reserved for the declared scope-modifier growth path, which contributes nobody.
+    |
+    | The array key is kebab because it is the registry root's last segment, so the root IS the
+    | config path (`config('beam.notifications.recipient-kinds')`). The keys INSIDE it stay snake:
+    | they are the schema keywords verbatim (`to_roles`), mirrored from x-beam-notify.
     */
-    'recipient_kinds' => [
+    'recipient-kinds' => [
         'to' => Splicewire\Beam\Notifications\Recipients\Kinds\AddressRecipientKind::class,
     ],
 

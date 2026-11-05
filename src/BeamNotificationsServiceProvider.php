@@ -28,7 +28,7 @@ use Splicewire\Beam\Notifications\Support\RegistrySchemaResolver;
  * in order to add two keyword keys. Measured twice: nothing in the family ever did, so half the
  * `x-beam-notify` keyword threw at every host while the docblocks said otherwise. The extension point
  * is now {@see RecipientKindRegistry} — beam-accounts APPENDS `to_roles` / `to_teams` to
- * `beam.notifications.recipient_kinds`, contributing one key each instead of replacing the mechanism.
+ * `beam.notifications.recipient-kinds`, contributing one key each instead of replacing the mechanism.
  *
  * Schema resolution is NOT a second seam here (beam-facade ticket 40): {@see RegistrySchemaResolver}
  * is a concrete class the listener depends on directly, autowired over beam-core's

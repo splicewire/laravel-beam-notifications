@@ -31,7 +31,7 @@ x-beam-notify:
 ## Recipient kinds
 
 A key spelled `to` or `to_*` is a **recipient selector**. Each one is resolved by the *kind*
-registered for it in `config('beam.notifications.recipient_kinds')` — a map of keyword key →
+registered for it in `config('beam.notifications.recipient-kinds')` — a map of keyword key →
 class-string. Everything else in the keyword (`channels`, `subject`, `template`, `notification`) is
 message configuration.
 
@@ -51,7 +51,7 @@ port they resolve through. Without that package they are simply unregistered —
 selector is a hard error, never a silent no-recipient send.
 
 **A host can add its own kind.** Implement `Contracts\RecipientKind`, register it under
-`beam.notifications.recipient_kinds.to_whatever`, and `to_whatever:` is authorable in a schema. No
+`beam.notifications.recipient-kinds.to_whatever`, and `to_whatever:` is authorable in a schema. No
 package involved has to probe whether another is installed: an unregistered kind is an absent
 config entry.
 
@@ -117,7 +117,7 @@ against the class.
 
 This package declares one registry:
 
-- [`beam.notifications.recipient_kinds`](docs/registries/beam.notifications.recipient_kinds.mdx): the
+- [`beam.notifications.recipient-kinds`](docs/registries/beam.notifications.recipient-kinds.mdx): the
   recipient kinds behind each `to` / `to_*` selector, described above.
 
 It registers into four registries `splicewire/laravel-beam` owns:
@@ -137,5 +137,5 @@ Both particles are declared at boot; the routes are mounted only when the host c
 ## Config
 
 `config/beam/notifications.php`, read as `config('beam.notifications.*')` — `listen` (master
-trigger switch), `default_channels`, `recipient_kinds` (above) and `resources` (the delivery-ledger
+trigger switch), `default_channels`, `recipient-kinds` (above) and `resources` (the delivery-ledger
 particle surface).

@@ -12,7 +12,7 @@ use Splicewire\Beam\Notifications\Contracts\RecipientKind;
  * The registry of `x-beam-notify` recipient KINDS — what replaced the rebindable resolver seam
  * (beam-facade 100, built by 159).
  *
- * Storage is `config('beam.notifications.recipient_kinds')`, a map of keyword key → class-string. This
+ * Storage is `config('beam.notifications.recipient-kinds')`, a map of keyword key → class-string. This
  * package seeds `to`; `splicewire/laravel-beam-accounts` appends `to_roles` / `to_teams` from its own
  * provider; a host may append its own kind in its config file with no code here changing.
  *
@@ -37,7 +37,7 @@ use Splicewire\Beam\Notifications\Contracts\RecipientKind;
  * (the accounts kinds inject {@see \Splicewire\Beam\Notifications\Contracts\AccountsDirectory}).
  */
 #[IsRegistry(
-    root: 'beam.notifications.recipient_kinds',
+    root: 'beam.notifications.recipient-kinds',
     entryType: 'class-string<'.RecipientKind::class.'>',
     onKeyDuplicate: OnKeyDuplicate::Supersede,
     populationRequirement: PopulationRequirement::Optional,
@@ -47,7 +47,7 @@ class RecipientKindRegistry extends ConfigRegistry
 {
     protected function configKey(): string
     {
-        return 'beam.notifications.recipient_kinds';
+        return 'beam.notifications.recipient-kinds';
     }
 
     /**

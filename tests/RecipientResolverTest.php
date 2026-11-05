@@ -102,7 +102,7 @@ it('throws when a REGISTERED kind resolves to nobody — the second terminal', f
         $table->string('team')->nullable();
     });
 
-    config()->set('beam.notifications.recipient_kinds.to_roles', TeamMemberRecipientKind::class);
+    config()->set('beam.notifications.recipient-kinds.to_roles', TeamMemberRecipientKind::class);
 
     expect(fn () => resolver()->resolve(['to_roles' => ['admin']], []))
         ->toThrow(NoRecipientsForKind::class);

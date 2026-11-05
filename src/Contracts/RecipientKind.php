@@ -17,7 +17,7 @@ use Splicewire\Beam\Notifications\Recipients\Recipient;
  *
  * A kind contributes ONE key and knows nothing about the others. beam-notifications registers `to`;
  * beam-accounts appends `to_roles` / `to_teams` to the same config key; a host may append its own. The
- * registry is `beam.notifications.recipient_kinds`, so an unregistered kind is literally an absent
+ * registry is `beam.notifications.recipient-kinds`, so an unregistered kind is literally an absent
  * config entry — there is no `class_exists` probe in either direction, and nothing has to guess whether
  * a sibling package is installed.
  *

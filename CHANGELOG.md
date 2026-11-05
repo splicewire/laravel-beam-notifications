@@ -40,7 +40,7 @@ with no admin) throws rather than sending nothing. beam-facade 100 D3.
 ### The rebindable `RecipientResolver` port is removed; recipient KINDS are the extension point
 
 `Contracts\RecipientResolver` is deleted. Recipient selectors are now resolved through
-`config('beam.notifications.recipient_kinds')` — a popcorn `ConfigRegistry` of keyword key →
+`config('beam.notifications.recipient-kinds')` — a popcorn `ConfigRegistry` of keyword key →
 `Contracts\RecipientKind` class-string. This package registers `to`;
 `splicewire/laravel-beam-accounts` appends `to_roles` / `to_teams`; a host may append its own.
 

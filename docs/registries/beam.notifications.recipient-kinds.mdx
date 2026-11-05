@@ -1,20 +1,20 @@
 ---
 title: Notification recipient kinds
-segment: beam.notifications.recipient_kinds
+segment: beam.notifications.recipient-kinds
 nav_order: 100
 excerpt: The to and to_* selectors a form's x-beam-notify keyword can use, and the class that resolves each.
 ---
 
 # Notification recipient kinds
 
-`beam.notifications.recipient_kinds` maps each **recipient selector** of the `x-beam-notify` schema
+`beam.notifications.recipient-kinds` maps each **recipient selector** of the `x-beam-notify` schema
 keyword, such as `to`, `to_roles` or `to_teams`, to the class that turns its values into actual
 recipients. When a form submission is created, every selector in the schema's keyword is resolved
 through the kind registered for it, and the notification goes to everyone they return.
 
 {/* registry-facts:start — generated from the #[IsRegistry] declaration; regenerate it, do not edit between these markers. */}
 
-- **Root:** `beam.notifications.recipient_kinds`
+- **Root:** `beam.notifications.recipient-kinds`
 - **Entries:** `class-string<Splicewire\Beam\Notifications\Contracts\RecipientKind>`
 - **Duplicate keys:** Supersede — a later registration under a taken key replaces the earlier entry, in its place
 - **Population:** Optional — an empty registry is normal
@@ -23,7 +23,7 @@ through the kind registered for it, and the notification goes to everyone they r
 
 {/* registry-facts:end */}
 
-<RegistryRegistrants root="beam.notifications.recipient_kinds" />
+<RegistryRegistrants root="beam.notifications.recipient-kinds" />
 
 ```yaml
 x-beam-notify:
@@ -62,13 +62,13 @@ class OnCallRecipientKind implements RecipientKind
 
 ```php
 // config/beam/notifications.php
-'recipient_kinds' => [
+'recipient-kinds' => [
     'to' => AddressRecipientKind::class,
     'to_on_call' => OnCallRecipientKind::class,
 ],
 ```
 
-From a provider, set the one leaf key, `config()->set('beam.notifications.recipient_kinds.to_on_call',
+From a provider, set the one leaf key, `config()->set('beam.notifications.recipient-kinds.to_on_call',
 …)`, never the whole array, so other packages' kinds survive. Kinds are class names made through the
 container, so a kind can take constructor dependencies.
 

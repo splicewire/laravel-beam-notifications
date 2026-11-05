@@ -38,7 +38,7 @@
         "wikimedia/composer-merge-plugin": "^2.1"
     },
     "suggest": {
-        "splicewire/laravel-beam-accounts": "Registers the to_roles / to_teams recipient kinds into `beam.notifications.recipient_kinds`, and binds the AccountsDirectory port they resolve through. Without it those two keys are simply unregistered, and the address-only `to:` key is the whole selector vocabulary."
+        "splicewire/laravel-beam-accounts": "Registers the to_roles / to_teams recipient kinds into `beam.notifications.recipient-kinds`, and binds the AccountsDirectory port they resolve through. Without it those two keys are simply unregistered, and the address-only `to:` key is the whole selector vocabulary."
     },
     "autoload": {
         "psr-4": {
