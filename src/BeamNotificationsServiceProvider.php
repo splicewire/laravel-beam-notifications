@@ -13,7 +13,6 @@ use Spatie\LaravelPackageTools\PackageServiceProvider;
 use Splicewire\Beam\Doctor\BeamDoctorManifest;
 use Splicewire\Beam\Events\BeamParticlePersisted;
 use Splicewire\Beam\Install\BeamInstallManifest;
-use Splicewire\Beam\Notifications\Doctor\BeamNotificationsMigrationsAudit;
 use Splicewire\Beam\Notifications\Listeners\NotifyOnSubmission;
 use Splicewire\Beam\Notifications\Recipients\RecipientKindRegistry;
 use Splicewire\Beam\Notifications\Support\RegistrySchemaResolver;
@@ -149,9 +148,9 @@ class BeamNotificationsServiceProvider extends PackageServiceProvider
         // convention — self-registers the doctor/operator check on ITS OWN migrations, same as every
         // other beam-* package registers it on theirs (guarded: a host predating the manifest still boots).
         if ($this->app->bound(BeamDoctorManifest::class)) {
-            $this->app->make(BeamDoctorManifest::class)->register(
+            $this->app->make(BeamDoctorManifest::class)->stubMigrations(
                 'splicewire/laravel-beam-notifications',
-                BeamNotificationsMigrationsAudit::class,
+                self::class,
             );
         }
 

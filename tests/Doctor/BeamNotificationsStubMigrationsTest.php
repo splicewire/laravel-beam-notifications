@@ -3,17 +3,18 @@
 namespace Splicewire\Beam\Notifications\Tests\Doctor;
 
 use Rushing\Doctor\DoctorStatus;
+use Splicewire\Beam\Doctor\Support\StubMigrationsAudit;
 use Splicewire\Beam\Doctor\Testing\AssertsStubMigrations;
-use Splicewire\Beam\Notifications\Doctor\BeamNotificationsMigrationsAudit;
+use Splicewire\Beam\Notifications\BeamNotificationsServiceProvider;
 use Splicewire\Beam\Notifications\Tests\TestCase;
 
 /**
  * beam-notifications' own operator check: its migrations must stay publish-only .stub files. Mirrors
  * the per-package `DeclaredTopologyTest` shape (`rushing/php-package-topology`'s
- * `AssertsDeclaredTopology`) — a thin test wrapping a shared engine, declaring only "which audit is
+ * `AssertsDeclaredTopology`) — a thin test wrapping a shared engine, declaring only "which package is
  * mine."
  */
-class BeamNotificationsMigrationsAuditTest extends TestCase
+class BeamNotificationsStubMigrationsTest extends TestCase
 {
     use AssertsStubMigrations;
 
@@ -31,15 +32,23 @@ class BeamNotificationsMigrationsAuditTest extends TestCase
      */
     public function test_shipping_no_migrations_at_all_is_a_pass_and_not_a_warn(): void
     {
-        $findings = (new BeamNotificationsMigrationsAudit)->run();
+        $findings = (new StubMigrationsAudit(
+            'splicewire/laravel-beam-notifications',
+            BeamNotificationsServiceProvider::class,
+        ))->run();
 
         $this->assertCount(1, $findings);
         $this->assertSame(DoctorStatus::Pass, $findings[0]->status);
         $this->assertStringContainsString('ships no migrations of its own', $findings[0]->detail);
     }
 
-    protected function stubMigrationsAuditClass(): string
+    protected function stubMigrationsPackage(): ?string
     {
-        return BeamNotificationsMigrationsAudit::class;
+        return 'splicewire/laravel-beam-notifications';
+    }
+
+    protected function stubMigrationsProvider(): ?string
+    {
+        return BeamNotificationsServiceProvider::class;
     }
 }

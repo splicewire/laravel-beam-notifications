@@ -7,8 +7,8 @@ use Splicewire\Beam\Install\InstallStep;
 
 /**
  * The install step is the only mechanism that propagates this arm's substrate to a host — 58 corrected
- * the earlier claim that `BeamNotificationsMigrationsAudit` did (it is package-source inspection and
- * never looks at a host).
+ * the earlier claim that its stub-migrations audit did (the provider's `stubMigrations()` declaration:
+ * it is package-source inspection and never looks at a host).
  *
  * What makes this worth a test rather than a comment: two of the three tags belong to a DIFFERENT
  * package. `rushing/laravel-notification-status` has never heard of beam, registers its own tags
