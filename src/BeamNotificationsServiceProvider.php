@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Rushing\NotificationStatus\Models\NotificationStatus;
 use Rushing\PermissionCascade\Policies\ConfiguredModelPolicy;
+use Rushing\Popcorn\Registries\ScopesRegistrant;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 use Splicewire\Beam\Doctor\BeamDoctorManifest;
@@ -74,6 +75,14 @@ use Splicewire\Beam\Notifications\Support\RegistrySchemaResolver;
  */
 class BeamNotificationsServiceProvider extends PackageServiceProvider
 {
+    use ScopesRegistrant;
+
+    /** Every registry write in register()/boot() that names no `$by` records this package. */
+    protected function registrant(): string
+    {
+        return 'splicewire/laravel-beam-notifications';
+    }
+
     public function configurePackage(Package $package): void
     {
         $package
