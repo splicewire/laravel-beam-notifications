@@ -61,3 +61,26 @@ it('names the ledger notification deliveries, singular and plural, under the unc
         ->and($resource->singularLabel)->toBe('Notification delivery')
         ->and($resource->isFramed())->toBeTrue();
 });
+
+it('emits the notification deliveries labels on the frame manifest, where nav and the list toolbar read them', function () {
+    // The manifest boundary, built the way `FrameManifestController` builds it: `resources[]` carries the
+    // definition (its `nav.label` is the nav entry and the list title) and `contexts[key]` carries the
+    // resolved singular the list toolbar says ("New …"). The registry assertion above is the declaration;
+    // this one is what the operator's shell is handed.
+    // The definition is the one beam's frame registry backing serves (`ParticleResource::toResourceDefinition()`);
+    // this package's harness binds no frame registry of its own, so it is derived from the same declaration here.
+    $definition = app(ParticleResourceRegistry::class)->get('notification-statuses')->toResourceDefinition();
+    $wire = json_decode(json_encode($definition), true);
+    $context = app(Schemastud\Frame\Registry\ContextManifest::class)->forResource(
+        $definition->data,
+        $definition->layout,
+        $definition->key,
+        $definition->resolvedCreateAffordance(),
+        $definition->resolvedSingularLabel(),
+    );
+
+    expect($wire['key'])->toBe('notification-statuses')
+        ->and($wire['nav']['label'])->toBe('Notification deliveries')
+        ->and($wire['singularLabel'])->toBe('Notification delivery')
+        ->and($context['singularLabel'])->toBe('Notification delivery');
+});
