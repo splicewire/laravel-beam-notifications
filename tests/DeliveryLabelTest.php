@@ -17,7 +17,7 @@ use Splicewire\Beam\Notifications\Tests\Fixtures\UnserializeTripwire;
 use Splicewire\Beam\Notifications\Tests\Fixtures\WakeupTripwire;
 
 /**
- * Owner re-walk WS-08: the Deliveries list named a lead's notification
+ * Owner re-walk WS-08: the Notification deliveries list (then labelled "Deliveries") named a lead's notification
  * `Splicewire\Beam\Notifications\Notifications\BeamNotification`. Every row now carries a `label` in
  * words, and the list's "Notification" column reads it. Asserted through the served list, the same
  * door the operator's screen reads.

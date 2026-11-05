@@ -128,7 +128,7 @@ It registers into four registries `splicewire/laravel-beam` owns:
 - [`beam.doctor.audits`](https://github.com/splicewire/laravel-beam/blob/main/docs/registries/beam.doctor.audits.mdx):
   the audit of the package's own published migrations.
 - [`beam.particle.resources`](https://github.com/splicewire/laravel-beam/blob/main/docs/registries/beam.particle.resources.mdx):
-  the read-only `notification-statuses` resource over the delivery ledger.
+  the read-only `notification-statuses` resource over the delivery ledger, labelled "Notification deliveries".
 - [`beam.particle.operations`](https://github.com/splicewire/laravel-beam/blob/main/docs/registries/beam.particle.operations.mdx):
   its `replay` operation.
 

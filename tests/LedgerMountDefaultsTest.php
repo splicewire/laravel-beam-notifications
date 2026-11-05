@@ -49,3 +49,15 @@ it('declares useful columns for the read-only delivery list', function () {
     $columns = array_filter($manifest['byNode'], fn ($contexts) => $contexts['list-column']['participates'] ?? false);
     expect(array_keys($columns))->toEqualCanonicalizing(['label', 'channel', 'status', 'attempts', 'queuedAt']);
 });
+
+// owner-review-20261102 K-15 (research 15, D-15-a): "Deliveries" alone named neither the ledger's unit (one
+// send to one recipient on one channel) nor which kind of delivery, and beam core's webhook history already
+// says `HookDeliveries…`. The resource label is the nav entry, the list title and, through tower's
+// `ConnectedSiteScopeLabels`, the noun of every connected-site permission label, so it is pinned here.
+it('names the ledger notification deliveries, singular and plural, under the unchanged key', function () {
+    $resource = app(ParticleResourceRegistry::class)->get('notification-statuses');
+
+    expect($resource->label)->toBe('Notification deliveries')
+        ->and($resource->singularLabel)->toBe('Notification delivery')
+        ->and($resource->isFramed())->toBeTrue();
+});

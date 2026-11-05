@@ -2,7 +2,16 @@
 
 ## Unreleased
 
-### The Deliveries list names each row in words: `NotificationStatusData::$label`
+### The ledger is labelled "Notification deliveries"
+
+The `notification-statuses` resource was labelled "Deliveries" (singular "Delivery"), which named neither the row's
+unit nor which kind of delivery, and collided with beam core's webhook delivery history (`HookDeliveries…`). It is
+now "Notification deliveries" / "Notification delivery" (owner-review-20261102 K-15). The key, the URL and the
+permission names are unchanged. The label is display text, but it is also the noun of tower's connected-site
+permission labels, so a captured fixture that recorded "Deliveries — View" reads "Notification deliveries — View"
+after a re-capture.
+
+### The Notification deliveries list names each row in words: `NotificationStatusData::$label`
 
 The ledger's "Notification" column showed `notificationType`, a class name such as
 `Splicewire\Beam\Notifications\Notifications\BeamNotification` (owner re-walk WS-08). Each row now
@@ -15,7 +24,7 @@ wire, but it is no longer a list column.
 
 A declared subject is rendered over the context the notification was stored with, so a subject that
 interpolates the payload (`New access request from {{ payload.name }}`) puts that lead's name on the
-Deliveries list, in `label`, for everyone who may read the ledger. The serialized instance still never
+Notification deliveries list, in `label`, for everyone who may read the ledger. The serialized instance still never
 travels; the label carries only what the subject spells out. A subject that must stay off the list
 should not interpolate the payload.
 
