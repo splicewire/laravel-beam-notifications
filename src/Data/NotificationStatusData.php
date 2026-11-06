@@ -56,12 +56,15 @@ use Splicewire\Beam\Particle\Attributes\ParticleResource;
     backing: NotificationStatus::class,
     // A non-empty label is what makes the resource FRAMED — it lights up the @schemastud/frame editor
     // as a navigable list. Read-only there by construction (see the class docblock).
-    label: 'Deliveries',
+    // "Notification deliveries", not bare "Deliveries" (owner-review-20261102 K-15): it names the row's unit and
+    // keeps the list apart from beam core's webhook delivery history (`HookDeliveries…`). The label is also the
+    // noun of tower's connected-site permission labels ("Notification deliveries — View").
+    label: 'Notification deliveries',
     group: 'Ops',
     icon: 'send',
     section: 'ops',
     readOnly: true,
-    singularLabel: 'Delivery',
+    singularLabel: 'Notification delivery',
 )]
 class NotificationStatusData extends BeamData
 {
