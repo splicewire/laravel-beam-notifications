@@ -133,6 +133,9 @@ It registers into four registries `splicewire/laravel-beam` owns:
   its `replay` operation.
 
 Both particles are declared at boot; the routes are mounted only when the host calls `Resources::register()`.
+The package also exports its own root (ADR-0243): `Routing\NotificationsRoutes::mount()` registers the same routes
+under `beam.notifications.api_root` (default `beam/notifications`), with names starting `beam.notifications.`. Call
+it inside the same authenticated tenant group; the legacy mount stays beside it until ticket 16 of owner-review-20261112.
 
 ## Config
 

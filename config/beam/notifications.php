@@ -62,4 +62,9 @@ return [
         'middleware' => [],
     ],
 
+    // The package's own API root (ADR-0243, owner-review-20261112 13d): `Routing\NotificationsRoutes::mount()`
+    // registers here, inside the host's boundary. The `resources.group_prefix` mount above stays beside it until
+    // ticket 16.
+    'api_root' => 'beam/notifications',
+
 ];

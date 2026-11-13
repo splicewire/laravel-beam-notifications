@@ -90,13 +90,20 @@ class Resources
         // `NotificationStatus` uses `HasUuids` and its migration declares `uuid('id')->primary()`.
         $idConstraint = $opts['idConstraint'] ?? 'uuid';
 
-        Route::middleware($middleware)->prefix($groupPrefix)->group(function () use ($idConstraint) {
-            Particle::mount('notification-statuses', 'notification-statuses')
-                ->idConstraint($idConstraint)
-                ->only(['index', 'show']);
+        Route::middleware($middleware)->prefix($groupPrefix)->group(fn () => self::routes($idConstraint));
+    }
 
-            // `Particle::ops()` both DISCOVERS (registers) the annotated op class and mounts it.
-            Particle::ops('notification-statuses', 'notification-statuses', [ReplayNotificationStatusOp::class]);
-        });
+    /**
+     * The notification-statuses routes, relative to whatever group the caller opens: the legacy host-prefixed group
+     * above, or the package root `NotificationsRoutes::mount()` opens (owner-review-20261112 13d). One body, two mounts.
+     */
+    public static function routes(string $idConstraint = 'uuid'): void
+    {
+        Particle::mount('notification-statuses', 'notification-statuses')
+            ->idConstraint($idConstraint)
+            ->only(['index', 'show']);
+
+        // `Particle::ops()` both DISCOVERS (registers) the annotated op class and mounts it.
+        Particle::ops('notification-statuses', 'notification-statuses', [ReplayNotificationStatusOp::class]);
     }
 }
