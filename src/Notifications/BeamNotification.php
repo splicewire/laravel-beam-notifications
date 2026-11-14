@@ -80,7 +80,7 @@ class BeamNotification extends Notification implements ShouldQueue
     {
         $subject = $this->subject !== null
             ? Interpolator::render($this->subject, $this->context)
-            : 'New submission';
+            : __('beam-notifications::messages.submission.new');
 
         $message = (new MailMessage)->subject($subject);
 

@@ -1,0 +1,9 @@
+{
+  "exclusions": [
+    {
+      "file": "src/Ops/ReplayNotificationStatusOp.php",
+      "method": "assertReplayable",
+      "reason": "Replay diagnostics retain raw bytes under ruling04; coordinator accepted explicit method exclusion. These are diagnostic replay refusals, not product-copy translation identities."
+    }
+  ]
+}

@@ -64,10 +64,10 @@ final class DeliveryLabel
         $title = data_get($context, 'schema.title');
 
         if (is_string($title) && ($title = self::clean($title)) !== '') {
-            return self::DEFAULT_SUBMISSION_SUBJECT.': '.$title;
+            return __('beam-notifications::messages.submission.titled', ['title' => $title]);
         }
 
-        return self::DEFAULT_SUBMISSION_SUBJECT;
+        return __('beam-notifications::messages.submission.new');
     }
 
     /**
@@ -105,7 +105,7 @@ final class DeliveryLabel
     private static function humanize(string $notificationType): string
     {
         if (str_contains($notificationType, '@anonymous')) {
-            return 'Notification';
+            return __('beam-notifications::messages.notification');
         }
 
         $short = Str::afterLast(trim($notificationType, '\\'), '\\');
@@ -120,7 +120,7 @@ final class DeliveryLabel
         ) ?: [];
 
         if ($words === []) {
-            return 'Notification';
+            return __('beam-notifications::messages.notification');
         }
 
         $words = array_map(
