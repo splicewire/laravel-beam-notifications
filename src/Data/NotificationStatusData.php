@@ -12,6 +12,7 @@ use Rushing\NotificationStatus\Models\NotificationStatus;
 use Rushing\PermissionCascade\Policies\BaseModelPolicy;
 use Schemastud\DataSchemas\Attributes\Description;
 use Schemastud\Frame\Attributes\Column;
+use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 use Splicewire\Beam\Data\BeamData;
 use Splicewire\Beam\Notifications\Support\DeliveryLabel;
 use Splicewire\Beam\Particle\Attributes\ParticleResource;
@@ -66,6 +67,7 @@ use Splicewire\Beam\Particle\Attributes\ParticleResource;
     readOnly: true,
     singularLabel: 'Notification delivery',
 )]
+#[TypeScript]
 class NotificationStatusData extends BeamData
 {
     public function __construct(

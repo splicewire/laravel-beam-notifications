@@ -5,6 +5,7 @@ namespace Splicewire\Beam\Notifications\Data;
 use Illuminate\Database\Eloquent\Model;
 use Rushing\NotificationStatus\Enums\NotificationDeliveryStatus;
 use Schemastud\DataSchemas\Attributes\Description;
+use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 use Splicewire\Beam\Data\BeamData;
 
 /**
@@ -17,6 +18,7 @@ use Splicewire\Beam\Data\BeamData;
  * the row's state as re-read after dispatch. On a queued run that state is the PRE-replay one (the
  * job has not run yet) — which is why `queued` ships beside it rather than being inferred from it.
  */
+#[TypeScript]
 class ReplayDispatchData extends BeamData
 {
     public function __construct(
