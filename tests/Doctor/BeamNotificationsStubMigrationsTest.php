@@ -24,13 +24,12 @@ class BeamNotificationsStubMigrationsTest extends TestCase
     }
 
     /**
-     * The shared trait only asserts "not Fail", so it would sit green over a warn. This package is the
-     * family's first to ship NO migrations at all (ticket 77 deleted the dead `beam_notifications`
-     * outbox, and durability lives in `rushing/laravel-notification-status`), which is the case ticket
-     * 77 taught {@see \Splicewire\Beam\Doctor\Support\StubMigrationsAudit} to PASS rather than warn —
-     * so pin the status, not just the absence of a failure.
+     * The shared trait only asserts "not Fail", so it would sit green over a warn. Ticket 77 deleted the
+     * dead `beam_notifications` outbox and this package shipped no migrations at all; attention-surfaces
+     * 08 gave it the stored-notifications table (decision 02 ruling 2), so the audit now reads the
+     * "ships publish-only stubs" branch. Pin that status, not just the absence of a failure.
      */
-    public function test_shipping_no_migrations_at_all_is_a_pass_and_not_a_warn(): void
+    public function test_the_notifications_table_ships_as_a_registered_publish_only_stub(): void
     {
         $findings = (new StubMigrationsAudit(
             'splicewire/laravel-beam-notifications',
@@ -39,7 +38,7 @@ class BeamNotificationsStubMigrationsTest extends TestCase
 
         $this->assertCount(1, $findings);
         $this->assertSame(DoctorStatus::Pass, $findings[0]->status);
-        $this->assertStringContainsString('ships no migrations of its own', $findings[0]->detail);
+        $this->assertStringContainsString('ships publish-only .stub migrations', $findings[0]->detail);
     }
 
     protected function stubMigrationsPackage(): ?string

@@ -26,19 +26,26 @@ class InstallStepTest extends TestCase
         $this->assertNotNull($step, 'beam-notifications registered no install step.');
         $this->assertSame([
             'beam-notifications-config',
+            'beam-notifications-migrations',
             'notification-status-config',
             'notification-status-migrations',
         ], $step->publishTags);
     }
 
     /**
-     * `beam-notifications-migrations` must NOT be listed. package-tools registers a
-     * `<short-name>-migrations` publish tag only per `->hasMigrations([...])` entry, and 77 deleted this
-     * package's only migration, so the tag does not exist — listing it would publish nothing.
+     * Every tag the step lists must exist, or the install publishes nothing for it (the dead-artifact
+     * rot 77 deleted). package-tools registers `<short-name>-migrations` only per `->hasMigrations([...])`
+     * entry: attention-surfaces 08 gave this package the stored-notifications table, so its own
+     * migrations tag exists again and must publish that stub.
      */
-    public function test_the_step_names_no_migrations_tag_of_its_own(): void
+    public function test_the_step_names_its_own_migrations_tag_and_it_publishes_the_notifications_table(): void
     {
-        $this->assertNotContains('beam-notifications-migrations', $this->step()->publishTags);
+        $this->assertContains('beam-notifications-migrations', $this->step()->publishTags);
+
+        $published = \Illuminate\Support\ServiceProvider::pathsToPublish(null, 'beam-notifications-migrations');
+
+        $this->assertCount(1, $published);
+        $this->assertStringEndsWith('create_notifications_table.php.stub', array_key_first($published));
     }
 
     private function step(): ?InstallStep
