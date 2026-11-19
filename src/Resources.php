@@ -44,7 +44,8 @@ class Resources
      * at all twelve installers.
      *
      * Scanned rather than named — `src/Data` holds the `#[ParticleResource]`, `src/Ops` the replay
-     * `#[ParticleOp]`. Idempotent by key, so declaring twice declares the same two.
+     * `#[ParticleOp]`. Declaring again replaces keyed entries and records supersessions;
+     * NotificationsRoutes::mount() preserves the existing resource declaration.
      */
     public static function declare(): void
     {

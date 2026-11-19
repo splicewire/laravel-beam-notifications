@@ -5,6 +5,7 @@ namespace Splicewire\Beam\Notifications\Routing;
 use Illuminate\Routing\Router;
 use Splicewire\Beam\Notifications\Resources;
 use Splicewire\Beam\Particle\ParticleOperationRegistry;
+use Splicewire\Beam\Particle\ParticleResourceRegistry;
 use Splicewire\Beam\Routing\ApiRoot;
 
 /**
@@ -18,10 +19,12 @@ final class NotificationsRoutes
     /** The notification-statuses read surface and its replay op: what `Resources::register()` mounts today. */
     public static function mount(array $opts = []): void
     {
-        Resources::declare();
-
         if (! class_exists(ParticleOperationRegistry::class)) {
             return; // beam particle infra genuinely absent, as Resources::register().
+        }
+
+        if (! app(ParticleResourceRegistry::class)->has('notification-statuses')) {
+            Resources::declare();
         }
 
         $idConstraint = $opts['idConstraint'] ?? 'uuid';
