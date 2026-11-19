@@ -1,0 +1,44 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+/**
+ * Laravel's stored-notifications table: the rows Laravel's `database` channel writes, and the rows a person's
+ * "Recent" list reads back (attention-surfaces decision 02, ruling 2: this package owns the table's migration).
+ *
+ * central-only. It publishes to the host's bare top level (`database/migrations/`), never into `shared/` or `tenant/`,
+ * so it never runs in a tenant schema. A stored row is addressed to the central person through their `notifications()`
+ * relation, whatever tenant is initialised, and carries no tenant.
+ *
+ * The recipient is keyed with `uuidMorphs()`. A plain `morphs()` is a BIGINT unless a host sets the morph key type,
+ * and the family's people are keyed by UUID: on Postgres that send can never be stored (decision 02, P4).
+ *
+ * Guarded on the table so a host that already has one (the flagship's own create, which shares this stem) converges
+ * rather than collides. A host whose existing table still keys the recipient as an integer needs its own forward ALTER;
+ * editing this stub reaches only a fresh database.
+ */
+return new class extends Migration
+{
+    public function up(): void
+    {
+        if (Schema::hasTable('notifications')) {
+            return;
+        }
+
+        Schema::create('notifications', function (Blueprint $table): void {
+            $table->uuid('id')->primary();
+            $table->string('type');
+            $table->uuidMorphs('notifiable');
+            $table->text('data');
+            $table->timestamp('read_at')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('notifications');
+    }
+};
