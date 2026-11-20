@@ -31,7 +31,13 @@ use Splicewire\Beam\Particle\Attributes\ParticleResource;
  * WHAT A ROW SAYS: {@see self::project()} applies localization 04's reader rule through beam's generic reader, for
  * the current reader's locale. A stored message reference renders; else a registered `notification` identity presenter
  * renders from the row's identity (commerce's auto-reload kinds); else the stored text is shown unchanged (`message`,
- * or an `x-beam-notify` row's authored `subject`). The wire carries rendered text, never a key. Nothing is back-filled.
+ * or an `x-beam-notify` row's authored `subject`, or its `body` when the subject is empty). The wire carries rendered
+ * text, never a key. Nothing is back-filled.
+ *
+ * THE PRODUCER CONTRACT for new product prose (decision 02, scope 6): store the sentence as a message reference under
+ * the `data` key **`messageReference`**, in {@see \Splicewire\Beam\Data\MessageReferenceData::toProperties()}'s shape,
+ * beside a legacy `message` for readers older than this one. A malformed or unknown-version reference falls back to the
+ * legacy text, never to the key.
  *
  * `kind` is a producer-owned open string (decision 02), not a closed vocabulary. `link` is the stored `action_url`,
  * or an existing commerce row's `cta_url`, unchanged: the list neither rewrites nor hides it, and a link into another
@@ -74,9 +80,9 @@ class StoredNotificationData extends Data
         #[Description('True until the reader marks it read.')]
         public bool $unread,
         #[Column(label: 'Received', sort: 4)]
-        #[Sortable(default: true, direction: 'desc')]
-        #[Description('When it was stored, ISO-8601. Newest first is the default order.')]
-        public string $createdAt,
+        #[Sortable(column: 'created_at', default: true, direction: 'desc')]
+        #[Description('When it was stored, ISO-8601; null for a row stored without a timestamp. Newest first is the default order.')]
+        public ?string $createdAt,
     ) {}
 
     /** One stored row, as its reader reads it. */
@@ -91,18 +97,20 @@ class StoredNotificationData extends Data
             kind: isset($data['kind']) && is_string($data['kind']) ? $data['kind'] : null,
             link: self::storedLink($data),
             unread: $notification->getAttribute('read_at') === null,
-            createdAt: (string) $notification->getAttribute('created_at')?->toIso8601String(),
+            // A row stored without a timestamp is listed with a null createdAt, not skipped and never an empty string.
+            createdAt: $notification->getAttribute('created_at')?->toIso8601String(),
         );
     }
 
     /**
-     * The stored words, unchanged: a producer's legacy `message`, else an `x-beam-notify` row's authored `subject`.
+     * The stored words, unchanged: a producer's legacy `message`, else an `x-beam-notify` row's authored `subject`, else
+     * its `body` (a form that authored no subject).
      *
      * @param  array<string, mixed>  $data
      */
     private static function storedText(array $data): ?string
     {
-        foreach (['message', 'subject'] as $field) {
+        foreach (['message', 'subject', 'body'] as $field) {
             if (isset($data[$field]) && is_string($data[$field]) && $data[$field] !== '') {
                 return $data[$field];
             }
