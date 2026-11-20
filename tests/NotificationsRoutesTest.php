@@ -26,13 +26,32 @@ function notificationsRouteTable(string $root): array
     return $table;
 }
 
+/**
+ * attention-surfaces 10: the reader's mark-read operations mount at the package root ONLY; the legacy mount keeps
+ * serving the ledger alone until ticket 16 retires it. So the root is the legacy table plus exactly these two routes.
+ */
+function readerOperationRoutes(): array
+{
+    return [
+        'POST notifications/read-all' => 'Splicewire\\Beam\\Http\\Particle\\ParticleOperationController@invoke',
+        'POST notifications/{id}/read' => 'Splicewire\\Beam\\Http\\Particle\\ParticleOperationController@invoke',
+    ];
+}
+
+/** The package root's table without the reader's operations, which the legacy mount deliberately does not carry. */
+function legacyShapedTable(string $root): array
+{
+    return array_diff_key(notificationsRouteTable($root), readerOperationRoutes());
+}
+
 it('registers the default root beside the legacy mount, inside the host boundary', function () {
     Route::prefix('host')->group(fn () => Resources::register());
     Route::domain('workspace.example')->middleware('auth')->group(fn () => NotificationsRoutes::mount());
 
     $current = app(Router::class)->getRoutes()->match(Request::create('http://workspace.example/beam/notifications/notification-statuses'));
 
-    expect(notificationsRouteTable('beam/notifications/'))->toBe(notificationsRouteTable('host/'))
+    expect(legacyShapedTable('beam/notifications/'))->toBe(notificationsRouteTable('host/'))
+        ->and(array_intersect_key(notificationsRouteTable('beam/notifications/'), readerOperationRoutes()))->toBe(readerOperationRoutes())
         ->and(notificationsRouteTable('beam/notifications/'))->not->toBeEmpty()
         ->and($current->gatherMiddleware())->toContain('auth')
         ->and($current->getDomain())->toBe('workspace.example')
@@ -47,6 +66,7 @@ it('moves only the package root when the host overrides it', function () {
 
     NotificationsRoutes::mount();
 
-    expect(notificationsRouteTable('custom/notify/'))->toBe(notificationsRouteTable('host/'))
+    expect(legacyShapedTable('custom/notify/'))->toBe(notificationsRouteTable('host/'))
+        ->and(array_intersect_key(notificationsRouteTable('custom/notify/'), readerOperationRoutes()))->toBe(readerOperationRoutes())
         ->and(notificationsRouteTable('beam/notifications/'))->toBeEmpty();
 });

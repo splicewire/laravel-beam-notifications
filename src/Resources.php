@@ -4,6 +4,8 @@ namespace Splicewire\Beam\Notifications;
 
 use Illuminate\Support\Facades\Route;
 use Splicewire\Beam\Facades\Particle;
+use Splicewire\Beam\Notifications\Ops\MarkAllNotificationsReadOp;
+use Splicewire\Beam\Notifications\Ops\MarkNotificationReadOp;
 use Splicewire\Beam\Notifications\Ops\ReplayNotificationStatusOp;
 use Splicewire\Beam\Particle\Attributes\AttributedParticleDiscovery;
 use Splicewire\Beam\Particle\ParticleOperationRegistry;
@@ -106,5 +108,18 @@ class Resources
 
         // `Particle::ops()` both DISCOVERS (registers) the annotated op class and mounts it.
         Particle::ops('notification-statuses', 'notification-statuses', [ReplayNotificationStatusOp::class]);
+    }
+
+    /**
+     * attention-surfaces 10: the reader's mark-read operations on the `notifications` resource (09), mounted only at
+     * the package root ({@see \Splicewire\Beam\Notifications\Routing\NotificationsRoutes::mount()}). The legacy
+     * {@see register()} mount keeps serving the ledger alone. The resource itself is served by Frame's socket and has
+     * no REST mount. A hand-written `Particle::ops()` mounts where it is written (particle doctrine, "A subject-free op
+     * is routed above the resource's own routes"), so the subject-free `read-all` is listed FIRST, above the
+     * `{id}/read` row route.
+     */
+    public static function readerRoutes(): void
+    {
+        Particle::ops('notifications', 'notifications', [MarkAllNotificationsReadOp::class, MarkNotificationReadOp::class]);
     }
 }

@@ -3,6 +3,7 @@
 namespace Splicewire\Beam\Notifications;
 
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Rushing\NotificationStatus\Models\NotificationStatus;
@@ -13,6 +14,7 @@ use Spatie\LaravelPackageTools\PackageServiceProvider;
 use Splicewire\Beam\Doctor\BeamDoctorManifest;
 use Splicewire\Beam\Events\BeamParticlePersisted;
 use Splicewire\Beam\Install\BeamInstallManifest;
+use Splicewire\Beam\Notifications\Authorization\StoredNotificationPolicy;
 use Splicewire\Beam\Notifications\Contracts\NotifiableForActor;
 use Splicewire\Beam\Notifications\Listeners\NotifyOnSubmission;
 use Splicewire\Beam\Notifications\Recipients\DefaultNotifiableForActor;
@@ -115,6 +117,13 @@ class BeamNotificationsServiceProvider extends PackageServiceProvider
 
     public function packageBooted(): void
     {
+        // Who may change a stored notification (attention-surfaces 10): only the port-resolved notifiable. Bound
+        // only when the host has bound no policy for the model, so a host's own policy wins (the bind-if-absent
+        // shape of the port above).
+        if (! array_key_exists(DatabaseNotification::class, Gate::policies())) {
+            Gate::policy(DatabaseNotification::class, StoredNotificationPolicy::class);
+        }
+
         // Self-register into beam-core's install manifest (ticket 08): splicewire:beam:install publishes this
         // package's config with the rest of the stack. beam-core never names this package — the
         // registration pushes DOWN into the manifest from here.

@@ -16,7 +16,7 @@ use Splicewire\Beam\Routing\ApiRoot;
  */
 final class NotificationsRoutes
 {
-    /** The notification-statuses read surface and its replay op: what `Resources::register()` mounts today. */
+    /** The notification-statuses read surface and its replay op (what `Resources::register()` mounts today), and the reader's mark-read operations (attention-surfaces 10). */
     public static function mount(array $opts = []): void
     {
         if (! class_exists(ParticleOperationRegistry::class)) {
@@ -30,7 +30,11 @@ final class NotificationsRoutes
         $idConstraint = $opts['idConstraint'] ?? 'uuid';
 
         ApiRoot::mount(app(Router::class), 'beam.notifications.api_root', 'notifications', function (Router $router) use ($idConstraint): void {
-            $router->name('beam.notifications.')->group(fn () => Resources::routes($idConstraint));
+            $router->name('beam.notifications.')->group(function () use ($idConstraint): void {
+                Resources::routes($idConstraint);
+                // attention-surfaces 10: the reader's mark-read operations, at the package root only.
+                Resources::readerRoutes();
+            });
         });
     }
 }
