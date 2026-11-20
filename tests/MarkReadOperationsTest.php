@@ -12,6 +12,7 @@ use Schemastud\Frame\FrameServiceProvider;
 use Splicewire\Beam\Notifications\Authorization\StoredNotificationPolicy;
 use Splicewire\Beam\Notifications\Routing\NotificationsRoutes;
 use Splicewire\Beam\Notifications\Tests\Fixtures\ReaderUser;
+use Splicewire\Beam\Notifications\Tests\Fixtures\SecondConnectionReader;
 use Splicewire\Beam\Notifications\Tests\Fixtures\UnplacedReader;
 
 /**
@@ -116,6 +117,7 @@ it('refuses an actor the port cannot place, with a coded refusal, and changes no
     $all = $this->postJson('/beam/notifications/notifications/read-all')->assertForbidden();
 
     expect($all->json('code'))->toBe('notification_reader_unresolved')
+        ->and($all->json('message'))->toBe('There are no notifications here for you to mark read.')
         ->and(readAtOf($adas))->toBeNull();
 });
 
@@ -152,4 +154,58 @@ it('admits a row only for the person it is addressed to, and refuses an unplaced
         ->and($policy->update($this->bea, $adas))->toBeFalse()
         ->and($policy->update($stranger, $adas))->toBeFalse()
         ->and($policy->update(null, $adas))->toBeFalse();
+});
+
+it('refuses a malformed row id at the route, so it never reaches the uuid column', function () {
+    $this->actingAs($this->ada);
+
+    expect(fn () => app('router')->getRoutes()->match(Request::create('/beam/notifications/notifications/not-a-uuid/read', 'POST')))
+        ->toThrow(Symfony\Component\HttpKernel\Exception\NotFoundHttpException::class);
+
+    $this->postJson('/beam/notifications/notifications/not-a-uuid/read')->assertNotFound();
+});
+
+it('answers 200 for an already-read row and leaves its read_at as it was', function () {
+    $id = storeUnreadFor($this->ada);
+    DB::table('notifications')->where('id', $id)->update(['read_at' => Carbon::parse('2026-11-19 07:00:00')]);
+    $before = readAtOf($id);
+
+    $this->actingAs($this->ada);
+    $this->postJson("/beam/notifications/notifications/{$id}/read")->assertOk()->assertJsonPath('data.unread', false);
+
+    expect(readAtOf($id))->toBe($before);
+});
+
+it('writes on the reader\'s own connection only: an ambient decoy with the same morph pair stays unread', function () {
+    config()->set('database.connections.second', ['driver' => 'sqlite', 'database' => ':memory:', 'prefix' => '']);
+    Schema::connection('second')->create('test_users', function ($table) {
+        $table->uuid('id')->primary();
+        $table->string('email')->nullable();
+    });
+    Schema::connection('second')->create('notifications', function ($table) {
+        $table->uuid('id')->primary();
+        $table->string('type');
+        $table->uuidMorphs('notifiable');
+        $table->text('data');
+        $table->timestamp('read_at')->nullable();
+        $table->timestamps();
+    });
+    $reader = SecondConnectionReader::query()->create(['email' => 'central@site.test']);
+    $row = fn (string $connection) => tap((string) Str::uuid(), fn (string $id) => DB::connection($connection)->table('notifications')->insert([
+        'id' => $id, 'type' => 'attention-surfaces.10.fixture', 'notifiable_type' => $reader->getMorphClass(),
+        'notifiable_id' => $reader->getKey(), 'data' => json_encode(['subject' => 'x']), 'read_at' => null,
+        'created_at' => now(), 'updated_at' => now(),
+    ]));
+    $one = $row('second');
+    $two = $row('second');
+    $decoy = $row(config('database.default'));
+
+    $this->actingAs($reader);
+    $this->postJson("/beam/notifications/notifications/{$one}/read")->assertOk();
+    $this->postJson("/beam/notifications/notifications/{$decoy}/read")->assertNotFound();
+    $marked = $this->postJson('/beam/notifications/notifications/read-all')->assertOk()->json('data.marked');
+
+    expect($marked)->toBe(1)
+        ->and(DB::connection('second')->table('notifications')->whereNull('read_at')->count())->toBe(0)
+        ->and(DB::table('notifications')->where('id', $decoy)->value('read_at'))->toBeNull();
 });

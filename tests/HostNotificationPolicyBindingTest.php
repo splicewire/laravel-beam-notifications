@@ -36,6 +36,31 @@ class HostNotificationPolicyBindingTest extends TestCase
     }
 }
 
+/**
+ * The other order: the host's provider boots AFTER this package's. The package bound its own policy first, and the
+ * host's later `Gate::policy()` replaces it. Together with the class above, a host's policy wins in either order.
+ */
+class HostNotificationPolicyBoundAfterTest extends TestCase
+{
+    protected function getPackageProviders($app): array
+    {
+        return [...parent::getPackageProviders($app), HostNotificationPolicyProvider::class];
+    }
+
+    public function test_a_host_policy_bound_after_the_package_boots_wins(): void
+    {
+        $providers = array_values(array_map(fn ($provider) => $provider::class, $this->app->getProviders(ServiceProvider::class)));
+
+        $this->assertGreaterThan(
+            array_search(\Splicewire\Beam\Notifications\BeamNotificationsServiceProvider::class, $providers, true),
+            array_search(HostNotificationPolicyProvider::class, $providers, true),
+            'the host provider must boot after the package provider for this test to mean anything',
+        );
+
+        $this->assertInstanceOf(HostNotificationPolicy::class, Gate::getPolicyFor(DatabaseNotification::class));
+    }
+}
+
 class HostNotificationPolicy
 {
     public function update(?Authenticatable $actor, mixed $notification = null): bool

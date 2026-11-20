@@ -52,6 +52,7 @@ class MarkAllNotificationsReadOp
             throw new CodedAuthorizationException(NotificationError::ReaderUnresolved);
         }
 
-        return new MarkedReadData(marked: $notifiable->unreadNotifications()->update(['read_at' => now()]));
+        // The list's own relation: the port guarantees `notifications()`, not `unreadNotifications()`.
+        return new MarkedReadData(marked: $notifiable->notifications()->whereNull('read_at')->update(['read_at' => now()]));
     }
 }

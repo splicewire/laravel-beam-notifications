@@ -19,6 +19,10 @@ use Splicewire\Beam\Notifications\Contracts\NotifiableForActor;
  * resolves them through the port and refuses an unplaced actor with a CODED refusal (a policy cannot carry a code
  * through beam's operation transport, which answers every ability denial as a bare 403).
  *
+ * THE HOST-READ CONTRACT: a host that binds its own policy for {@see DatabaseNotification} must accept `update` called
+ * with NO second argument, because read-all asks it of the model class (`abilityModel:`), not of a row. Give the row
+ * parameter a default (`?DatabaseNotification $notification = null`), as this class does.
+ *
  * Deny-default stays for every row: this is a policy, so a scoped credential is narrowed by the derived
  * `{model}.update` name (particle doctrine, credential-scope). It is a HOST-READ INTERFACE: the provider binds it only
  * when the host has bound no policy for {@see DatabaseNotification}, so a host's own policy wins (the same
