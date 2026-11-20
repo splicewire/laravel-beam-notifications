@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -86,20 +85,10 @@ it('stores one row for a real send to a UUID-keyed person, with no notification 
         ]);
 });
 
-it('binds the default port, and a host binding wins', function () {
+// That a host binding made BEFORE the package registers survives (bindIf, not bind) is
+// HostNotifiableForActorBindingTest's: it needs its own provider order.
+it('binds the default port when nothing else is bound', function () {
     expect(app(NotifiableForActor::class))->toBeInstanceOf(DefaultNotifiableForActor::class);
-
-    $own = new class implements NotifiableForActor
-    {
-        public function resolve(mixed $actor): ?Model
-        {
-            return null;
-        }
-    };
-
-    app()->instance(NotifiableForActor::class, $own);
-
-    expect(app(NotifiableForActor::class))->toBe($own);
 });
 
 it('returns an actor that is itself notifiable', function () {
