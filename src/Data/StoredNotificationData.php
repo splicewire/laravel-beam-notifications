@@ -34,10 +34,12 @@ use Splicewire\Beam\Particle\Attributes\ParticleResource;
  * or an `x-beam-notify` row's authored `subject`, or its `body` when the subject is empty). The wire carries rendered
  * text, never a key. Nothing is back-filled.
  *
- * THE PRODUCER CONTRACT for new product prose (decision 02, scope 6): store the sentence as a message reference under
- * the `data` key **`messageReference`**, in {@see \Splicewire\Beam\Data\MessageReferenceData::toProperties()}'s shape,
- * beside a legacy `message` for readers older than this one. A malformed or unknown-version reference falls back to the
- * legacy text, never to the key.
+ * THE PRODUCER CONTRACT for new product prose (decision 02, scope 6; the package's AGENTS.md, "The producer rule"):
+ * store a `kind` and the sentence as a message reference under the `data` key **`messageReference`**, in
+ * {@see \Splicewire\Beam\Data\MessageReferenceData::toProperties()}'s shape, and no English sentence. A producer whose
+ * legacy fields are already in storage (commerce's auto-reload notices) keeps them byte-identical and appends the
+ * reference; nothing is back-filled. A malformed or unknown-version reference falls back to the row's stored text when
+ * it has one, never to the key.
  *
  * `kind` is a producer-owned open string (decision 02), not a closed vocabulary. `link` is the stored `action_url`,
  * or an existing commerce row's `cta_url`, unchanged: the list neither rewrites nor hides it, and a link into another
