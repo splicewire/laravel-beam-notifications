@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Splicewire\Beam\Particle\ActionAffordance;
 use Splicewire\Beam\Notifications\Data\ReplayDispatchData;
 use Splicewire\Beam\Notifications\Resources;
 use Splicewire\Beam\Particle\ParticleOperationRegistry;
@@ -16,6 +17,15 @@ it('declares the ledger and replay output at boot without mounting HTTP routes',
         fn ($route) => str_contains($route->uri(), 'notification-statuses'),
     );
     expect($routes)->toBeEmpty();
+});
+
+it('declares replay as a labeled row action in the delivery ledger', function () {
+    $operation = app(ParticleOperationRegistry::class)->get('notification-statuses', 'replay');
+
+    expect($operation->actionAffordance())
+        ->toBeInstanceOf(ActionAffordance::class)
+        ->and($operation->actionAffordance()->label)
+        ->toBe('Replay delivery');
 });
 
 it('inherits the host prefix and middleware when mounted inside its route group', function (bool $explicitOverrides) {

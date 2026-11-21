@@ -9,6 +9,7 @@ use Rushing\NotificationStatus\Enums\NotificationDeliveryStatus;
 use Rushing\NotificationStatus\Jobs\ReplayNotificationStatus;
 use Rushing\NotificationStatus\Models\NotificationStatus;
 use Splicewire\Beam\Notifications\Data\ReplayDispatchData;
+use Splicewire\Beam\Particle\ActionAffordance;
 use Splicewire\Beam\Particle\Attributes\ParticleOp;
 use Splicewire\Beam\Particle\OperationKind;
 
@@ -61,6 +62,7 @@ use Splicewire\Beam\Particle\OperationKind;
     name: 'replay',
     kind: OperationKind::Task,
     ability: 'update',
+    affordance: new ActionAffordance(label: 'Replay delivery'),
     input: false,
     output: ReplayDispatchData::class,
 )]
