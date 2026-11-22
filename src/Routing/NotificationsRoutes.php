@@ -19,6 +19,23 @@ final class NotificationsRoutes
     /** The notification-statuses read surface and its replay op (what `Resources::register()` mounts today), and the reader's mark-read operations (attention-surfaces 10). */
     public static function mount(array $opts = []): void
     {
+        self::mountAt($opts, reader: true);
+    }
+
+    /**
+     * The delivery LEDGER only: the notification-statuses read surface and its replay op, without the reader's
+     * mark-read operations (attention-surfaces 31). For a host that seats the ledger in a second group (an operator
+     * console) beside its tenant `mount()`: the reader's operations must exist once, in the reader's boundary. Mounting
+     * the whole package twice registers their route names again, and the LAST registration wins URL generation, so the
+     * reader's manifest actions would point at the second group's URLs.
+     */
+    public static function mountLedger(array $opts = []): void
+    {
+        self::mountAt($opts, reader: false);
+    }
+
+    private static function mountAt(array $opts, bool $reader): void
+    {
         if (! class_exists(ParticleOperationRegistry::class)) {
             return; // beam particle infra genuinely absent, as Resources::register().
         }
@@ -29,11 +46,13 @@ final class NotificationsRoutes
 
         $idConstraint = $opts['idConstraint'] ?? 'uuid';
 
-        ApiRoot::mount(app(Router::class), 'beam.notifications.api_root', 'notifications', function (Router $router) use ($idConstraint): void {
-            $router->name('beam.notifications.')->group(function () use ($idConstraint): void {
+        ApiRoot::mount(app(Router::class), 'beam.notifications.api_root', 'notifications', function (Router $router) use ($idConstraint, $reader): void {
+            $router->name('beam.notifications.')->group(function () use ($idConstraint, $reader): void {
                 Resources::routes($idConstraint);
-                // attention-surfaces 10: the reader's mark-read operations, at the package root only.
-                Resources::readerRoutes();
+                if ($reader) {
+                    // attention-surfaces 10: the reader's mark-read operations, at the package root only.
+                    Resources::readerRoutes();
+                }
             });
         });
     }

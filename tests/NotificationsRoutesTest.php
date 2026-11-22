@@ -70,3 +70,30 @@ it('moves only the package root when the host overrides it', function () {
         ->and(array_intersect_key(notificationsRouteTable('custom/notify/'), readerOperationRoutes()))->toBe(readerOperationRoutes())
         ->and(notificationsRouteTable('beam/notifications/'))->toBeEmpty();
 });
+
+// attention-surfaces 31: a host that seats the delivery ledger in a second (operator) group mounts the LEDGER ONLY, so
+// the reader's mark-read operations exist once, inside the tenant boundary, and their route names keep generating
+// tenant URLs. Mounting the whole package twice registered the reader names again last, so the tenant manifest's
+// actions pointed at the operator API.
+it('mounts the ledger alone for a second group, so the reader operations keep their tenant URLs', function () {
+    Route::domain('workspace.example')->middleware('auth')->group(fn () => NotificationsRoutes::mount());
+    Route::prefix('api/operator')->middleware('auth')->group(fn () => NotificationsRoutes::mountLedger());
+    app('router')->getRoutes()->refreshNameLookups();
+
+    $operator = notificationsRouteTable('api/operator/beam/notifications/');
+
+    expect($operator)->not->toBeEmpty()
+        ->and(array_intersect_key($operator, readerOperationRoutes()))->toBe([])
+        ->and($operator)->toBe(legacyShapedTable('beam/notifications/'));
+
+    $readerNames = collect(app(Router::class)->getRoutes())
+        ->filter(fn ($route) => str_ends_with($route->uri(), 'notifications/read-all') || str_ends_with($route->uri(), 'notifications/{id}/read'))
+        ->map(fn ($route) => $route->getName())
+        ->unique()
+        ->values();
+
+    expect($readerNames)->toHaveCount(2);
+    foreach ($readerNames as $name) {
+        expect(route($name, ['id' => '00000000-0000-0000-0000-000000000000']))->toStartWith('http://workspace.example/beam/notifications/notifications/');
+    }
+});
