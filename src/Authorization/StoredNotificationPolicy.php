@@ -19,9 +19,15 @@ use Splicewire\Beam\Notifications\Contracts\NotifiableForActor;
  * resolves them through the port and refuses an unplaced actor with a CODED refusal (a policy cannot carry a code
  * through beam's operation transport, which answers every ability denial as a bare 403).
  *
+ * An UNSAVED instance is answered the same way (attention-surfaces 30). Frame's manifest asks whether the actor may press
+ * the record action Mark read before any row exists, and beam asks that with a fresh, unsaved instance of the backing's
+ * model; it belongs to nobody, so the row check would refuse everyone and the button would never draw. The mount always
+ * passes the real, saved row, which keeps the ownership check.
+ *
  * THE HOST-READ CONTRACT: a host that binds its own policy for {@see DatabaseNotification} must accept `update` called
  * with NO second argument, because read-all asks it of the model class (`abilityModel:`), not of a row. Give the row
- * parameter a default (`?DatabaseNotification $notification = null`), as this class does.
+ * parameter a default (`?DatabaseNotification $notification = null`), as this class does, and answer an unsaved
+ * instance as that class-level question too, or Mark read will not draw.
  *
  * Deny-default stays for every row: this is a policy, so a scoped credential is narrowed by the derived
  * `{model}.update` name (particle doctrine, credential-scope). It is a HOST-READ INTERFACE: the provider binds it only
@@ -34,7 +40,10 @@ class StoredNotificationPolicy
 
     public function update(?Authenticatable $actor, ?DatabaseNotification $notification = null): bool
     {
-        if ($notification === null) {
+        // An UNSAVED instance is no row anybody owns: it is beam's class-level probe for a record action (the manifest
+        // asks with a fresh instance of the backing's model, ParticleActionAuthorizer), so it is answered like null.
+        // A saved row keeps the ownership check below; the mount always passes the real row (attention-surfaces 30).
+        if ($notification === null || ! $notification->exists) {
             return $actor !== null;
         }
 

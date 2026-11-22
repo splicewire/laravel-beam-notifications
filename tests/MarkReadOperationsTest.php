@@ -156,6 +156,35 @@ it('admits a row only for the person it is addressed to, and refuses an unplaced
         ->and($policy->update(null, $adas))->toBeFalse();
 });
 
+// attention-surfaces 30: the manifest asks a record action's ability with a FRESH, unsaved instance of the backing's
+// model (beam's ParticleActionAuthorizer class-level probe). That instance is not a row anybody owns, so it is the
+// class-level question, answered like null; a saved row keeps the ownership check.
+it('answers an unsaved instance as the class-level probe, and still refuses a saved row of another person', function () {
+    $policy = app(StoredNotificationPolicy::class);
+    $beas = DatabaseNotification::query()->findOrFail(storeUnreadFor($this->bea));
+
+    expect($policy->update($this->ada, new DatabaseNotification))->toBeTrue()
+        ->and($policy->update(null, new DatabaseNotification))->toBeFalse()
+        ->and($policy->update($this->ada, $beas))->toBeFalse()
+        ->and($policy->update($this->bea, $beas))->toBeTrue();
+});
+
+it('lets Frame draw Mark read as well as Mark all read for a reader', function () {
+    // This file's beforeEach registers FrameServiceProvider AFTER boot, and frame's register() binds its deny-everything
+    // action authorizer again. In a host, beam's booted hook re-binds frame's default to beam's own answer
+    // (BeamServiceProvider: ResourceActionAuthorizer -> ParticleActionAuthorizer); restore that binding here.
+    app()->bind(
+        \Schemastud\Frame\Contracts\ResourceActionAuthorizer::class,
+        \Splicewire\Beam\Frame\ParticleActionAuthorizer::class,
+    );
+    $this->actingAs($this->ada);
+
+    $can = $this->getJson('/frame/manifest')->assertOk()->json('contexts.notifications.can.actions');
+
+    expect($can['read'] ?? null)->toBeTrue()
+        ->and($can['read-all'] ?? null)->toBeTrue();
+});
+
 it('refuses a malformed row id at the route, so it never reaches the uuid column', function () {
     $this->actingAs($this->ada);
 
