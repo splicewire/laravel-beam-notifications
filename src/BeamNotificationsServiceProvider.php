@@ -118,11 +118,19 @@ class BeamNotificationsServiceProvider extends PackageServiceProvider
     public function packageBooted(): void
     {
         // Who may change a stored notification (attention-surfaces 10): only the port-resolved notifiable. Bound
-        // only when the host has bound no policy for the model, so a host's own policy wins (the bind-if-absent
-        // shape of the port above).
-        if (! array_key_exists(DatabaseNotification::class, Gate::policies())) {
-            Gate::policy(DatabaseNotification::class, StoredNotificationPolicy::class);
-        }
+        // only when the host has no policy for the model, so a host's own policy wins (the bind-if-absent shape
+        // of the port above).
+        //
+        // "Has no policy" is asked of the Gate, not of its explicit map (attention-surfaces 29, ruling 2): a host
+        // that maps policies by `Gate::guessPolicyNamesUsing()` binds nothing explicitly, and an explicit bind here
+        // would then outrank its guessed policy. Asked once the application has BOOTED, because a host sets its
+        // guesser in its own `AppServiceProvider::boot()`, which runs after every discovered package provider; asked
+        // here, in this package's boot, `getPolicyFor()` would answer from the default guess and miss it.
+        $this->app->booted(function (): void {
+            if (Gate::getPolicyFor(DatabaseNotification::class) === null) {
+                Gate::policy(DatabaseNotification::class, StoredNotificationPolicy::class);
+            }
+        });
 
         // Self-register into beam-core's install manifest (ticket 08): splicewire:beam:install publishes this
         // package's config with the rest of the stack. beam-core never names this package — the

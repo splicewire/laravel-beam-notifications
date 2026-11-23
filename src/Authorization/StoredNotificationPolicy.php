@@ -31,8 +31,8 @@ use Splicewire\Beam\Notifications\Contracts\NotifiableForActor;
  *
  * Deny-default stays for every row: this is a policy, so a scoped credential is narrowed by the derived
  * `{model}.update` name (particle doctrine, credential-scope). It is a HOST-READ INTERFACE: the provider binds it only
- * when the host has bound no policy for {@see DatabaseNotification}, so a host's own policy wins (the same
- * bind-if-absent shape as 08's port).
+ * when the Gate has no policy for {@see DatabaseNotification} once the application has booted, bound or guessed, so a
+ * host's own policy wins (the bind-if-absent shape of 08's port; attention-surfaces 29).
  */
 class StoredNotificationPolicy
 {

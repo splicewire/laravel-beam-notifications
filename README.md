@@ -113,6 +113,33 @@ the listener depends on directly: it reads a snapshot frozen on the record (`sch
 longer exists and never rebound by any host. A host needing different policy binds a subclass
 against the class.
 
+## Binding your own notification policy
+
+Who may mark a stored notification read is decided by the Gate's `update` ability on
+`Illuminate\Notifications\DatabaseNotification`. The package ships `StoredNotificationPolicy`, which admits only the
+person a row is addressed to. It binds that policy **only when the Gate has none for the model** once the application
+has booted. So your own policy wins whether you bind it with `Gate::policy()` in any provider, or map it with
+`Gate::guessPolicyNamesUsing()`.
+
+Your policy's `update` must keep this signature:
+
+```php
+public function update(?Authenticatable $actor, ?DatabaseNotification $notification = null): bool
+```
+
+It must also answer three calls:
+
+1. **No notification argument.** `POST {notifications}/read-all` asks `update` of the model *class*, because it has
+   no row (beam passes a class-string `abilityModel:` to the Gate, and the Gate drops it). Give the row parameter a
+   default. Without one, the call throws `ArgumentCountError` and read-all answers 500.
+2. **An unsaved instance** (`$notification->exists === false`). Frame's manifest asks whether the actor may press
+   the per-row *Mark read* action before it has a row. Beam asks that with a fresh, unsaved `DatabaseNotification`.
+   Answer it as the class-level question of clause 1, or the button never draws.
+3. **A saved row.** Ownership is decided here. The mount always passes the real row.
+
+Read-all marks only the requesting notifiable's own unread rows. It resolves them itself and refuses an actor it
+cannot place, so admitting clauses 1 and 2 for any signed-in actor (as the shipped policy does) widens nothing.
+
 ## Registries
 
 This package declares one registry:
