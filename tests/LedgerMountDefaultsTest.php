@@ -83,10 +83,7 @@ it('emits the notification deliveries labels on the frame manifest, where nav an
     $wire = json_decode(json_encode($definition), true);
     $context = app(Schemastud\Frame\Registry\ContextManifest::class)->forResource(
         $definition->data,
-        $definition->layout,
-        $definition->key,
-        $definition->resolvedCreateAffordance(),
-        $definition->resolvedSingularLabel(),
+        Schemastud\Frame\Registry\ContextBlockFacts::forDefinition($definition),
     );
 
     expect($wire['key'])->toBe('notification-statuses')
