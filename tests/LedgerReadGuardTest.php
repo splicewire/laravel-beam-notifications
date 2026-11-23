@@ -66,12 +66,15 @@ beforeEach(function () {
     }
 });
 
-it('shows an authenticated caller holding no ability NOTHING, rather than the whole ledger', function () {
+// attention-surfaces 29: beam's read guard now REFUSES these two callers, where it once let the scope answer an empty
+// list. beam 62fafd1 (2026-10-09) made a bound policy's viewAny a precondition of the list beside the scope, and
+// beam 01abf93 (2026-10-13) stopped a row scope from authorizing an otherwise ungated read (ResourceReadGuard). The
+// guarantee this file exists for is unchanged and still asserted: such a caller reads none of the ledger.
+it('refuses an authenticated caller holding no ability, and shows it none of the ledger', function () {
     $this->actingAs(new AuthUser);
 
-    $response = $this->getJson('resources/notification-statuses')->assertOk();
+    $response = $this->getJson('resources/notification-statuses')->assertForbidden();
 
-    expect($response->json('data'))->toBe([]);
     expect($response->getContent())->not->toContain('ERROR-DETAIL-AN-UNPRIVILEGED-CALLER-MUST-NOT-READ');
 });
 
@@ -96,7 +99,7 @@ it('fails CLOSED when no policy is bound for the ledger model', function () {
 
     $this->actingAs(new AuthUser);
 
-    $response = $this->getJson('resources/notification-statuses')->assertOk();
+    $response = $this->getJson('resources/notification-statuses')->assertForbidden();
 
-    expect($response->json('data'))->toBe([]);
+    expect($response->getContent())->not->toContain('ERROR-DETAIL-AN-UNPRIVILEGED-CALLER-MUST-NOT-READ');
 });

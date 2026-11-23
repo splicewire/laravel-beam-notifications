@@ -222,33 +222,38 @@ class BeamNotificationsServiceProvider extends PackageServiceProvider
         // a plausible ANSWER rather than an error.
         $ledgerModel = config('notification-status.models.notification_status', NotificationStatus::class);
 
-        if ($ledgerModel && class_exists(ConfiguredModelPolicy::class) && Gate::getPolicyFor($ledgerModel) === null) {
-            // Bound through a container key rather than by class name, because `ConfiguredModelPolicy`
-            // takes the model class as a constructor argument and so cannot be auto-resolved from a
-            // bare `Gate::policy($model, Policy::class)`. This mirrors `CascadePolicyRegistrar::register()`
-            // exactly, minus the `#[UseCascadePolicy]` reflection this model cannot carry.
-            $key = 'permission-cascade-policy:'.$ledgerModel;
+        // Checked once the application has booted (attention-surfaces 29, as for the stored-notification policy above):
+        // a host maps its own ledger policy in its own provider, which boots after this one, and by `Gate::policy()` or
+        // by `Gate::guessPolicyNamesUsing()`. `getPolicyFor()` sees both, but only once the host has run.
+        $this->app->booted(function () use ($ledgerModel): void {
+            if ($ledgerModel && class_exists(ConfiguredModelPolicy::class) && Gate::getPolicyFor($ledgerModel) === null) {
+                // Bound through a container key rather than by class name, because `ConfiguredModelPolicy`
+                // takes the model class as a constructor argument and so cannot be auto-resolved from a
+                // bare `Gate::policy($model, Policy::class)`. This mirrors `CascadePolicyRegistrar::register()`
+                // exactly, minus the `#[UseCascadePolicy]` reflection this model cannot carry.
+                $key = 'permission-cascade-policy:'.$ledgerModel;
 
-            $this->app->bind($key, fn () => new ConfiguredModelPolicy($ledgerModel));
+                $this->app->bind($key, fn () => new ConfiguredModelPolicy($ledgerModel));
 
-            Gate::policy($ledgerModel, $key);
+                Gate::policy($ledgerModel, $key);
 
-            // ⛔ The morph alias for the same model — ADR-0118, amended decision 5: "registration follows
-            // ownership", and the owner is whoever declares the POLICY, which is this package. That is the
-            // non-obvious half here: `rushing/laravel-notification-status` ships the model but binds no
-            // policy and deliberately does not depend on permission-cascade, so it cannot own this.
-            //
-            // Aliased INSIDE the same guard and against `$ledgerModel` rather than the imported FQCN,
-            // because a host may rebind `notification-status.models.notification_status` — the policy
-            // binding above already honours that, and an alias naming the hardcoded class would silently
-            // disagree with it on exactly the hosts that rebind.
-            //
-            // Additive, never `enforceMorphMap` (20+ class-string morphs elsewhere would orphan). Key is
-            // the snake_case SHORT NAME per the estate's 106 existing aliases. Measured safe: zero live
-            // polymorphic rows store this class or this key anywhere in 19 schemas, no subclass exists, and
-            // `notification_status` is free in the booted map.
-            Relation::morphMap(['notification_status' => $ledgerModel], true);
-        }
+                // ⛔ The morph alias for the same model — ADR-0118, amended decision 5: "registration follows
+                // ownership", and the owner is whoever declares the POLICY, which is this package. That is the
+                // non-obvious half here: `rushing/laravel-notification-status` ships the model but binds no
+                // policy and deliberately does not depend on permission-cascade, so it cannot own this.
+                //
+                // Aliased INSIDE the same guard and against `$ledgerModel` rather than the imported FQCN,
+                // because a host may rebind `notification-status.models.notification_status` — the policy
+                // binding above already honours that, and an alias naming the hardcoded class would silently
+                // disagree with it on exactly the hosts that rebind.
+                //
+                // Additive, never `enforceMorphMap` (20+ class-string morphs elsewhere would orphan). Key is
+                // the snake_case SHORT NAME per the estate's 106 existing aliases. Measured safe: zero live
+                // polymorphic rows store this class or this key anywhere in 19 schemas, no subclass exists, and
+                // `notification_status` is free in the booted map.
+                Relation::morphMap(['notification_status' => $ledgerModel], true);
+            }
+        });
 
         Resources::declare();
 
