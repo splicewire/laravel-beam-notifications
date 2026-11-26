@@ -11,10 +11,12 @@ use Rushing\PermissionCascade\Policies\ConfiguredModelPolicy;
 use Rushing\Popcorn\Registries\ScopesRegistrant;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
+use Splicewire\Beam\Config\ConfigSectionRegistry;
 use Splicewire\Beam\Doctor\BeamDoctorManifest;
 use Splicewire\Beam\Events\BeamParticlePersisted;
 use Splicewire\Beam\Install\BeamInstallManifest;
 use Splicewire\Beam\Notifications\Authorization\StoredNotificationPolicy;
+use Splicewire\Beam\Notifications\Config\BeamNotificationsSection;
 use Splicewire\Beam\Notifications\Contracts\NotifiableForActor;
 use Splicewire\Beam\Notifications\Listeners\NotifyOnSubmission;
 use Splicewire\Beam\Notifications\Recipients\DefaultNotifiableForActor;
@@ -178,6 +180,20 @@ class BeamNotificationsServiceProvider extends PackageServiceProvider
                 self::class,
             );
         }
+
+        // Declare the ADR-0245 Config Section for `beam.notifications` into beam-core's registry, so the
+        // config census attributes every key of config/beam/notifications.php to this owned section
+        // (source `registry`) instead of reporting the root undeclared. Registration only — the declared
+        // shape lives in {@see BeamNotificationsSection}, and `recipient-kinds` is the host-extensible map
+        // beam-accounts appends into. `callAfterResolving` so a host that never resolves the registry (no
+        // census, no doctor) still boots without paying for it.
+        $this->callAfterResolving(ConfigSectionRegistry::class, static function (ConfigSectionRegistry $sections): void {
+            $sections->section(
+                BeamNotificationsSection::class,
+                owner: 'splicewire/laravel-beam-notifications',
+                packageFile: dirname(__DIR__).'/config/beam/notifications.php',
+            );
+        });
 
         // DECLARE the operator view of the ledger this package delegated durability to (ticket 75 /
         // 58 Q3): a read-only `notification-statuses` resource + the `replay` op. Registration only —
