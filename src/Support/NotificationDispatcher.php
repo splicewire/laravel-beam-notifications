@@ -5,6 +5,7 @@ namespace Splicewire\Beam\Notifications\Support;
 use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Notifications\Notification as LaravelNotification;
 use Illuminate\Support\Facades\Notification;
+use Splicewire\Beam\Notifications\Contracts\NotifiableForActor;
 use Splicewire\Beam\Notifications\Keywords;
 use Splicewire\Beam\Notifications\Notifications\BeamNotification;
 use Splicewire\Beam\Notifications\Recipients\DefaultRecipientResolver;
@@ -31,7 +32,10 @@ use Splicewire\Beam\Notifications\Recipients\Recipient;
  */
 class NotificationDispatcher
 {
-    public function __construct(protected DefaultRecipientResolver $resolver) {}
+    public function __construct(
+        protected DefaultRecipientResolver $resolver,
+        protected NotifiableForActor $notifiableForActor,
+    ) {}
 
     /**
      * @param  array<string, mixed>  $notify  The parsed `x-beam-notify` keyword.
@@ -86,7 +90,24 @@ class NotificationDispatcher
     protected function send(Recipient $recipient, LaravelNotification $notification): void
     {
         if ($recipient->isNotifiable()) {
-            Notification::send($recipient->notifiable, $notification);
+            // AS11: a to_* kind under a tenant guard yields a TenantUser-shaped REPLICA that is not
+            // itself notifiable and whose rows belong to the central person behind it. Map every
+            // notifiable recipient through the NotifiableForActor port (rule 1 returns an already-
+            // notifiable actor unchanged, so direct-notifiable recipients are untouched) before
+            // Notification::send. A recipient that maps to nobody is reported and skipped, never
+            // dispatched to the bare replica (which has no notification routing and would throw).
+            $notifiable = $this->notifiableForActor->resolve($recipient->notifiable);
+
+            if ($notifiable === null) {
+                report(new \RuntimeException(sprintf(
+                    'beam-notifications: recipient %s is not placeable to a notifiable person; skipped.',
+                    $recipient->notifiable::class,
+                )));
+
+                return;
+            }
+
+            Notification::send($notifiable, $notification);
 
             return;
         }
