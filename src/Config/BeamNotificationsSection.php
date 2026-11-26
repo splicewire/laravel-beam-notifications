@@ -22,7 +22,7 @@ use Splicewire\Beam\Config\ConfigSection;
 class BeamNotificationsSection extends ConfigSection
 {
     public function __construct(
-        #[Title('Listen'), Description('Master switch for the `BeamSubmission::created` -> notify listener. Off, a submission is still captured (beam\'s job) but no notification is dispatched.'), ConfigKey]
+        #[Title('Listen'), Description('Master switch for the persisted-particle -> notify listener. On, every beam write path\'s `BeamParticlePersisted` event dispatches a notification; off, the record is still persisted (beam\'s job) but nothing is dispatched. (The retired `BeamSubmission::created` trigger this used to name is gone — beam-write-pipeline ticket 05 / ADR-0150.)'), ConfigKey]
         public bool $listen,
         #[Title('Default channels'), Description('The generic driver\'s default channel list, used when a schema\'s `x-beam-notify` omits `channels`. `via()` always intersects this with the app\'s registered channel drivers, so naming `central` on a headless beam (no relay provider) is a silent no-op, never a crash.'), ConfigKey, ArrayItems('string')]
         public array $default_channels,
